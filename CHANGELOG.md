@@ -3,6 +3,10 @@
 ## Unreleased
 
 * Bumped the minimum PHP version to PHP 7.3
+* All main components were already supposed to be retrieved only through an instance of `Kreait\Firebase`, and were
+  not meant to be instantiated directly. In order to be able to change the internals of the classes without breaking
+  them for others, the following components are not directly instatiable anymore: `Kreait\Firebase\Auth`, 
+  `Kreait\Firebase\Database`, `Kreait\Firebase\Messaging`, `Kreait\Firebase\RemoteConfig`, `Kreait\Firebase\Storage`
 
 ## 4.21.0 - 2019-05-14
 
