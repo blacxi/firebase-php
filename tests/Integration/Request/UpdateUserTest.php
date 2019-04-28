@@ -124,7 +124,7 @@ class UpdateUserTest extends IntegrationTestCase
         $this->assertEquals($claims, $user->customAttributes);
 
         // Make sure the custom claims are available in the user's ID token
-        $idTokenResponse = $this->auth->getApiClient()->exchangeCustomTokenForIdAndRefreshToken(
+        $idTokenResponse = $this->auth->exchangeCustomTokenForIdAndRefreshToken(
             $this->auth->createCustomToken($user->uid)
         );
         $idToken = $this->auth->verifyIdToken(JSON::decode($idTokenResponse->getBody()->getContents(), true)['idToken']);

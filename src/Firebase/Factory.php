@@ -201,13 +201,12 @@ class Factory
         $http = $this->createApiClient([
             'base_uri' => 'https://www.googleapis.com/identitytoolkit/v3/relyingparty/',
         ]);
-        $apiClient = new Auth\ApiClient($http);
 
         $customTokenGenerator = $this->createCustomTokenGenerator();
         $keyStore = new HttpKeyStore(new Client(), $this->verifierCache ?: new InMemoryCache());
         $verifier = new Verifier($this->getServiceAccount()->getSanitizedProjectId(), $keyStore);
 
-        return $this->instantiate(Auth::class, $apiClient, $customTokenGenerator, $verifier);
+        return $this->instantiate(Auth::class, $http, $customTokenGenerator, $verifier);
     }
 
     public function createCustomTokenGenerator(): Generator

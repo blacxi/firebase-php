@@ -35,7 +35,7 @@ class CustomTokenViaGoogleIamTest extends IntegrationTestCase
     {
         $user = $this->auth->createUser([]);
 
-        $idTokenResponse = $this->auth->getApiClient()->exchangeCustomTokenForIdAndRefreshToken(
+        $idTokenResponse = $this->auth->exchangeCustomTokenForIdAndRefreshToken(
             $this->generator->createCustomToken($user->uid)
         );
         $idToken = JSON::decode($idTokenResponse->getBody()->getContents(), true)['idToken'];

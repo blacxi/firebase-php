@@ -2,8 +2,8 @@
 .PHONY: test coverage view-coverage cs docs view-docs tag
 
 test: ## Executes the test suites
-	@vendor/bin/phpunit --testsuite unit
 	@vendor/bin/phpstan analyse --no-progress
+	@vendor/bin/phpunit --testsuite unit
 
 integration-tests: ## Executes the integration test suite
 	@vendor/bin/phpunit --testsuite integration

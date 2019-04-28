@@ -7,11 +7,18 @@ use Firebase\Auth\Token\Domain\Verifier as IdTokenVerifier;
 use Firebase\Auth\Token\Exception\InvalidSignature;
 use Firebase\Auth\Token\Exception\InvalidToken;
 use Firebase\Auth\Token\Exception\IssuedInTheFuture;
-use Kreait\Firebase\Auth\ApiClient;
+use Generator;
+use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
+use JsonSerializable;
 use Kreait\Firebase\Auth\UserRecord;
+use Kreait\Firebase\Exception\Auth\CredentialsMismatch;
+use Kreait\Firebase\Exception\Auth\InvalidCustomToken;
 use Kreait\Firebase\Exception\Auth\InvalidPassword;
 use Kreait\Firebase\Exception\Auth\RevokedIdToken;
 use Kreait\Firebase\Exception\Auth\UserNotFound;
+use Kreait\Firebase\Exception\AuthException;
 use Kreait\Firebase\Exception\InvalidArgumentException;
 use Kreait\Firebase\Util\DT;
 use Kreait\Firebase\Util\JSON;
@@ -22,14 +29,16 @@ use Kreait\Firebase\Value\Provider;
 use Kreait\Firebase\Value\Uid;
 use Lcobucci\JWT\Parser;
 use Lcobucci\JWT\Token;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
+use Throwable;
 
 class Auth
 {
     /**
-     * @var ApiClient
+     * @var ClientInterface
      */
-    private $client;
+    private $httpClient;
 
     /**
      * @var TokenGenerator
@@ -41,23 +50,20 @@ class Auth
      */
     private $idTokenVerifier;
 
-    private function __construct(ApiClient $client, TokenGenerator $customToken, IdTokenVerifier $idTokenVerifier)
+    private function __construct(ClientInterface $httpClient, TokenGenerator $customToken, IdTokenVerifier $idTokenVerifier)
     {
-        $this->client = $client;
+        $this->httpClient = $httpClient;
         $this->tokenGenerator = $customToken;
         $this->idTokenVerifier = $idTokenVerifier;
-    }
-
-    public function getApiClient(): ApiClient
-    {
-        return $this->client;
     }
 
     public function getUser($uid): UserRecord
     {
         $uid = $uid instanceof Uid ? $uid : new Uid($uid);
 
-        $response = $this->client->getAccountInfo((string) $uid);
+        $response = $this->request('getAccountInfo', [
+            'localId' => [(string) $uid],
+        ]);
 
         $data = JSON::decode((string) $response->getBody(), true);
 
@@ -72,9 +78,9 @@ class Auth
      * @param int $maxResults
      * @param int $batchSize
      *
-     * @return \Generator|UserRecord[]
+     * @return Generator|UserRecord[]
      */
-    public function listUsers(int $maxResults = null, int $batchSize = null): \Generator
+    public function listUsers(int $maxResults = null, int $batchSize = null): Generator
     {
         $maxResults = $maxResults ?? 1000;
         $batchSize = $batchSize ?? 1000;
@@ -83,7 +89,11 @@ class Auth
         $count = 0;
 
         do {
-            $response = $this->client->downloadAccount($batchSize, $pageToken);
+            $response = $this->request('downloadAccount', array_filter([
+                'maxResults' => $batchSize,
+                'nextPageToken' => $pageToken,
+            ]));
+
             $result = JSON::decode((string) $response->getBody(), true);
 
             foreach ((array) ($result['users'] ?? []) as $userData) {
@@ -104,6 +114,7 @@ class Auth
      * @param array|Request\CreateUser $properties
      *
      * @throws InvalidArgumentException if invalid properties have been provided
+     * @throws AuthException if the Auth API couldn't process the request
      *
      * @return UserRecord
      */
@@ -113,7 +124,7 @@ class Auth
             ? $properties
             : Request\CreateUser::withProperties($properties);
 
-        $response = $this->client->createUser($request);
+        $response = $this->request('signupNewUser', $request);
 
         $uid = JSON::decode((string) $response->getBody(), true)['localId'];
 
@@ -138,7 +149,7 @@ class Auth
 
         $request = $request->withUid($uid);
 
-        $response = $this->client->updateUser($request);
+        $response = $this->request('setAccountInfo', $request);
 
         $uid = JSON::decode((string) $response->getBody(), true)['localId'];
 
@@ -160,11 +171,23 @@ class Auth
         );
     }
 
+    /**
+     * Returns a user for the given email address.
+     *
+     * @param Email|string $email
+     *
+     * @throws AuthException
+     * @throws UserNotFound
+     *
+     * @return UserRecord
+     */
     public function getUserByEmail($email): UserRecord
     {
         $email = $email instanceof Email ? $email : new Email($email);
 
-        $response = $this->client->getUserByEmail((string) $email);
+        $response = $this->request('getAccountInfo', [
+            'email' => [(string) $email],
+        ]);
 
         $data = JSON::decode((string) $response->getBody(), true);
 
@@ -175,11 +198,18 @@ class Auth
         return UserRecord::fromResponseData($data['users'][0]);
     }
 
+    /**
+     * @param PhoneNumber|string $phoneNumber
+     *
+     * @return UserRecord
+     */
     public function getUserByPhoneNumber($phoneNumber): UserRecord
     {
         $phoneNumber = $phoneNumber instanceof PhoneNumber ? $phoneNumber : new PhoneNumber($phoneNumber);
 
-        $response = $this->client->getUserByPhoneNumber((string) $phoneNumber);
+        $response = $this->request('getAccountInfo', [
+            'phoneNumber' => [(string) $phoneNumber],
+        ]);
 
         $data = JSON::decode((string) $response->getBody(), true);
 
@@ -239,13 +269,17 @@ class Auth
 
     /**
      * @param Uid|string $uid
+     *
+     * @throws UserNotFound
      */
-    public function deleteUser($uid)
+    public function deleteUser($uid): void
     {
         $uid = $uid instanceof Uid ? $uid : new Uid($uid);
 
         try {
-            $this->client->deleteUser((string) $uid);
+            $this->request('deleteAccount', [
+                'localId' => (string) $uid,
+            ]);
         } catch (UserNotFound $e) {
             throw UserNotFound::withCustomMessage('No user with uid "'.$uid.'" found.');
         }
@@ -255,26 +289,42 @@ class Auth
      * @param Uid|string $uid
      * @param UriInterface|string $continueUrl
      */
-    public function sendEmailVerification($uid, $continueUrl = null, string $locale = null)
+    public function sendEmailVerification($uid, $continueUrl = null, string $locale = null): void
     {
-        $response = $this->client->exchangeCustomTokenForIdAndRefreshToken(
+        $response = $this->exchangeCustomTokenForIdAndRefreshToken(
             $this->createCustomToken($uid)
         );
 
         $idToken = JSON::decode((string) $response->getBody(), true)['idToken'];
 
-        $this->client->sendEmailVerification($idToken, (string) $continueUrl, $locale);
+        $headers = $locale ? ['X-Firebase-Locale' => $locale] : null;
+
+        $data = array_filter([
+            'requestType' => 'VERIFY_EMAIL',
+            'idToken' => (string) $idToken,
+            'continueUrl' => (string) $continueUrl,
+        ]);
+
+        $this->request('getOobConfirmationCode', $data, $headers);
     }
 
     /**
      * @param Email|string $email
      * @param UriInterface|string|null $continueUrl
      */
-    public function sendPasswordResetEmail($email, $continueUrl = null, string $locale = null)
+    public function sendPasswordResetEmail($email, $continueUrl = null, string $locale = null): void
     {
         $email = $email instanceof Email ? $email : new Email($email);
 
-        $this->client->sendPasswordResetEmail((string) $email, (string) $continueUrl, $locale);
+        $headers = $locale ? ['X-Firebase-Locale' => $locale] : null;
+
+        $data = array_filter([
+            'email' => (string) $email,
+            'requestType' => 'PASSWORD_RESET',
+            'continueUrl' => trim((string) $continueUrl),
+        ]);
+
+        $this->request('getOobConfirmationCode', $data, $headers);
     }
 
     /**
@@ -389,7 +439,10 @@ class Auth
         $email = $email instanceof Email ? $email : new Email($email);
         $password = $password instanceof ClearTextPassword ? $password : new ClearTextPassword($password);
 
-        $response = $this->client->verifyPassword((string) $email, (string) $password);
+        $response = $this->request('verifyPassword', [
+            'email' => (string) $email,
+            'password' => (string) $password,
+        ]);
 
         $uid = JSON::decode((string) $response->getBody(), true)['localId'];
 
@@ -404,24 +457,80 @@ class Auth
      *
      * @param Uid|string $uid the user whose tokens are to be revoked
      */
-    public function revokeRefreshTokens($uid)
+    public function revokeRefreshTokens($uid): void
     {
         $uid = $uid instanceof Uid ? $uid : new Uid($uid);
 
-        $this->client->revokeRefreshTokens((string) $uid);
+        $this->request('setAccountInfo', [
+            'localId' => (string) $uid,
+            'validSince' => time(),
+        ]);
     }
 
     public function unlinkProvider($uid, $provider): UserRecord
     {
         $uid = $uid instanceof Uid ? $uid : new Uid($uid);
-        $provider = array_map(function ($provider) {
+
+        $providers = array_map(static function ($provider) {
             return $provider instanceof Provider ? $provider : new Provider($provider);
         }, (array) $provider);
 
-        $response = $this->client->unlinkProvider($uid, $provider);
+        $response = $this->request('setAccountInfo', [
+            'localId' => (string) $uid,
+            'deleteProvider' => $providers,
+        ]);
 
         $uid = JSON::decode((string) $response->getBody(), true)['localId'];
 
         return $this->getUser($uid);
+    }
+
+    /**
+     * Takes a custom token and exchanges it with an ID token.
+     *
+     * @param Token $token
+     *
+     * @see https://firebase.google.com/docs/reference/rest/auth/#section-verify-custom-token
+     *
+     * @throws InvalidCustomToken when the custom token is invalid for some reason
+     * @throws CredentialsMismatch when the custom token does not match the project it's being sent to
+     *
+     * @return ResponseInterface
+     */
+    public function exchangeCustomTokenForIdAndRefreshToken(Token $token): ResponseInterface
+    {
+        return $this->request('verifyCustomToken', [
+            'token' => (string) $token,
+            'returnSecureToken' => true,
+        ]);
+    }
+
+    /**
+     * @param string $uri
+     * @param JsonSerializable|array|object $data
+     * @param array|null $headers
+     *
+     * @throws AuthException
+     *
+     * @return ResponseInterface
+     */
+    private function request(string $uri, $data, array $headers = null): ResponseInterface
+    {
+        if ($data instanceof JsonSerializable && empty($data->jsonSerialize())) {
+            $data = (object) []; // Ensure '{}' instead of '[]' when JSON encoded
+        }
+
+        $options = array_filter([
+            'json' => $data,
+            'headers' => $headers,
+        ]);
+
+        try {
+            return $this->httpClient->request('POST', $uri, $options);
+        } catch (RequestException $e) {
+            throw AuthException::fromRequestException($e);
+        } catch (Throwable | GuzzleException $e) {
+            throw new AuthException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 }

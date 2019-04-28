@@ -2,22 +2,27 @@
 
 namespace Kreait\Firebase\Tests\Unit;
 
+use Exception;
 use Firebase\Auth\Token\Domain\Generator;
 use Firebase\Auth\Token\Domain\Verifier;
 use Firebase\Auth\Token\Exception\InvalidToken;
 use Firebase\Auth\Token\Exception\IssuedInTheFuture;
+use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\RequestException;
 use Kreait\Firebase\Auth;
-use Kreait\Firebase\Auth\ApiClient;
+use Kreait\Firebase\Exception\AuthException;
+use Kreait\Firebase\Request\CreateUser;
 use Kreait\Firebase\Tests\UnitTestCase;
 use Lcobucci\JWT\Token;
 use Prophecy\Argument;
+use Psr\Http\Message\RequestInterface;
 
 class AuthTest extends UnitTestCase
 {
     /**
-     * @var ApiClient
+     * @var ClientInterface
      */
-    private $apiClient;
+    private $httpClient;
 
     /**
      * @var Generator
@@ -38,13 +43,28 @@ class AuthTest extends UnitTestCase
     {
         $this->tokenGenerator = $this->createMock(Generator::class);
         $this->idTokenVerifier = $this->createMock(Verifier::class);
-        $this->apiClient = $this->createMock(ApiClient::class);
-        $this->auth = $this->instantiate(Auth::class, $this->apiClient, $this->tokenGenerator, $this->idTokenVerifier);
+        $this->httpClient = $this->createMock(ClientInterface::class);
+        $this->auth = $this->instantiate(Auth::class, $this->httpClient, $this->tokenGenerator, $this->idTokenVerifier);
     }
 
-    public function testGetApiClient()
+    public function testCatchHttpRequestException()
     {
-        $this->assertSame($this->apiClient, $this->auth->getApiClient());
+        $request = $this->prophesize(RequestInterface::class);
+
+        $this->httpClient->method('request')
+            ->willThrowException(new RequestException('Foo', $request->reveal()));
+
+        $this->expectException(AuthException::class);
+        $this->auth->createUser(CreateUser::new());
+    }
+
+    public function testCatchHttpThrowable()
+    {
+        $this->httpClient->method('request')
+            ->willThrowException(new Exception());
+
+        $this->expectException(AuthException::class);
+        $this->auth->createUser(CreateUser::new());
     }
 
     public function testCreateCustomToken()
