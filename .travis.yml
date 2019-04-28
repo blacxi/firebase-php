@@ -1,3 +1,4 @@
+dist: xenial
 language: php
 php:
   - '7.3'
@@ -6,20 +7,25 @@ addons:
   sonarcloud:
     organization: "kreait"
 
-git:
-  depth: false
-
 cache:
   directories:
     - vendor
     - $HOME/.composer/cache
 
-before_install: .travis/before_install.sh
+git:
+  depth: false
 
-install: .travis/install.sh
+before_install:
+  - |
+    if [ "$TRAVIS_SECURE_ENV_VARS" = "true" ]; then
+      openssl aes-256-cbc -K $encrypted_d51fa485ef84_key -iv $encrypted_d51fa485ef84_iv -in secrets.tar.enc -out secrets.tar -d;
+      tar xvf secrets.tar
+    fi
 
-script: .travis/build.sh
+install:
+  - composer update $COMPOSER_FLAGS --no-interaction --no-suggest --no-progress
 
-notifications:
-  email:
-    - secure: "iiseqb4k4ckQkMJnZ6Tq3YP5ilTZE4CkVgarsBpPOn+c820nP9QokGpz82D4CTGy/UB1+DfCiFH9YAFrhLP5/9Go1CHP+wYkuz9W+E8q/rm9/nBO0xutoQhOfV3MxMid69E8i4QjODq3w5mOUrmpj/8gl2FyBU1Ro1xgPSYNEQ4="
+script:
+  - vendor/bin/phpstan analyse src -c phpstan.neon --level=6 --no-progress -vvv
+  - vendor/bin/phpunit --coverage-clover=coverage-report.clover --log-junit=test-report.xml
+  - sonar-scanner
