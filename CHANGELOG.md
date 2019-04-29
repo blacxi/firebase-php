@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## Unreleased
+
+* Bumped the minimum PHP version to PHP 7.3
+
 ## 4.21.0 - 2019-05-14
 
 * You can now wrap Realtime Database Saves and Deletions in Transactions/Conditional requests. 
