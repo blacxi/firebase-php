@@ -257,25 +257,11 @@ class Factory
 
     protected function createMessaging(): Messaging
     {
-        $serviceAccount = $this->getServiceAccount();
-        $projectId = $serviceAccount->getSanitizedProjectId();
+        $projectId = $this->getServiceAccount()->getSanitizedProjectId();
 
-        $messagingApiClient = new Messaging\ApiClient(
-            $this->createApiClient([
-                'base_uri' => 'https://fcm.googleapis.com/v1/projects/'.$projectId,
-            ])
-        );
+        $httpClient = $this->createApiClient();
 
-        $topicManagementApiClient = new Messaging\TopicManagementApiClient(
-            $this->createApiClient([
-                'base_uri' => 'https://iid.googleapis.com',
-                'headers' => [
-                    'access_token_auth' => 'true',
-                ],
-            ])
-        );
-
-        return $this->instantiate(Messaging::class, $messagingApiClient, $topicManagementApiClient);
+        return $this->instantiate(Messaging::class, $projectId, $httpClient);
     }
 
     public function createApiClient(array $config = null, array $additionalScopes = null): Client
@@ -291,14 +277,10 @@ class Factory
         }
         $stack->push($googleAuthTokenMiddleware);
 
-        $config = array_merge(
-            $this->httpClientConfig,
-            $config ?? [],
-            [
-                'handler' => $stack,
-                'auth' => 'google_auth',
-            ]
-        );
+        $config = array_merge($this->httpClientConfig, $config, [
+            'handler' => $stack,
+            'auth' => 'google_auth',
+        ]);
 
         return new Client($config);
     }

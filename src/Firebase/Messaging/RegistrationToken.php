@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Kreait\Firebase\Messaging;
 
-class RegistrationToken implements \JsonSerializable
+use JsonSerializable;
+
+class RegistrationToken implements JsonSerializable
 {
     /**
      * @var string

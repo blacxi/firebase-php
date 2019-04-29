@@ -30,7 +30,7 @@ class FactoryTest extends UnitTestCase
         $this->serviceAccount = ServiceAccount::fromJsonFile(self::$fixturesDir.'/ServiceAccount/valid.json');
 
         $this->discoverer = $this->createMock(Discoverer::class);
-        $this->discoverer->expects($this->any())
+        $this->discoverer
             ->method('discover')
             ->willReturn($this->serviceAccount);
 
