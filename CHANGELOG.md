@@ -2,12 +2,22 @@
 
 ## Unreleased
 
+If you're using PHP 7.3 and are interacting with the SDK only through a `Kreait\Firebase` instance
+created with `Kreait\Firebase\Factory`, Release 5.x should be a drop-in replacement for 4.x.
+
+### Breaking changes
+
 * Bumped the minimum PHP version to PHP 7.3
 * All main components were already supposed to be retrieved only through an instance of `Kreait\Firebase`, and were
   not meant to be instantiated directly. In order to be able to change the internals of the classes without breaking
   them for others, the following components are not directly instatiable anymore: `Kreait\Firebase\Auth`, 
   `Kreait\Firebase\Database`, `Kreait\Firebase\Messaging`, `Kreait\Firebase\RemoteConfig`, `Kreait\Firebase\Storage`
 * The components are the only points of interaction with the Firebase APIs (all `ApiClient` classes have been removed)
+* The following class constants have been changed from public to private:
+  * `Kreait\Firebase\Database\Reference\Validator::MAX_DEPTH`
+  * `Kreait\Firebase\Database\Reference\Validator::MAX_KEY_SIZE`
+  * `Kreait\Firebase\Database\Reference\Validator::MAX_INVALID_KEY_CHARS`
+  * `Kreait\Firebase\RemoteConfig\DefaultValue::IN_APP_DEFAULT_VALUE`
 * Removed depreacted classes:
   * `Kreait\Firebase\Messaging\ConditionalMessage`, use `Kreait\Firebase\CloudMessage`
   * `Kreait\Firebase\Messaging\MessageToRegistrationToken`, use `Kreait\Firebase\CloudMessage`

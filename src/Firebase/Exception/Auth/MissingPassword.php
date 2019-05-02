@@ -7,7 +7,7 @@ use Throwable;
 
 class MissingPassword extends AuthException
 {
-    const IDENTIFIER = 'MISSING_PASSWORD';
+    public const IDENTIFIER = 'MISSING_PASSWORD';
 
     public function __construct($code = 0, Throwable $previous = null)
     {

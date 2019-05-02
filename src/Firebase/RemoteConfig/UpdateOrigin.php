@@ -8,9 +8,9 @@ use Kreait\Firebase\Value;
 
 final class UpdateOrigin implements Value, \JsonSerializable
 {
-    const UNSPECIFIED = 'REMOTE_CONFIG_UPDATE_ORIGIN_UNSPECIFIED';
-    const CONSOLE = 'CONSOLE';
-    const REST_API = 'REST_API';
+    public const UNSPECIFIED = 'REMOTE_CONFIG_UPDATE_ORIGIN_UNSPECIFIED';
+    public const CONSOLE = 'CONSOLE';
+    public const REST_API = 'REST_API';
 
     /**
      * @var string

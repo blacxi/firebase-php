@@ -9,7 +9,7 @@ use Throwable;
 
 class OperationAborted extends RemoteConfigException
 {
-    const IDENTIFER = 'ABORTED';
+    public const IDENTIFER = 'ABORTED';
 
     public function __construct($message = '', $code = 0, Throwable $previous = null)
     {

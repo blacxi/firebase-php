@@ -7,7 +7,7 @@ use Throwable;
 
 class PhoneNumberExists extends AuthException
 {
-    const IDENTIFIER = 'PHONE_NUMBER_EXISTS';
+    public const IDENTIFIER = 'PHONE_NUMBER_EXISTS';
 
     public function __construct($code = 0, Throwable $previous = null)
     {

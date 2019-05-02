@@ -7,9 +7,9 @@ use Psr\Http\Message\UriInterface;
 
 class Validator
 {
-    const MAX_DEPTH = 32;
-    const MAX_KEY_SIZE = 768;
-    const INVALID_KEY_CHARS = '.$#[]';
+    private const MAX_DEPTH = 32;
+    private const MAX_KEY_SIZE = 768;
+    private const INVALID_KEY_CHARS = '.$#[]';
 
     /**
      * Checks the reference URI for invalid properties.

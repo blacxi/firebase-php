@@ -9,7 +9,7 @@ use Throwable;
 
 class PermissionDenied extends RemoteConfigException
 {
-    const IDENTIFER = 'PERMISSION_DENIED';
+    public const IDENTIFER = 'PERMISSION_DENIED';
 
     public function __construct($message = '', $code = 0, Throwable $previous = null)
     {

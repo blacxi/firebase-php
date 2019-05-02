@@ -7,7 +7,7 @@ use Throwable;
 
 class UserNotFound extends AuthException
 {
-    const IDENTIFIER = 'USER_NOT_FOUND';
+    public const IDENTIFIER = 'USER_NOT_FOUND';
 
     public function __construct($code = 0, Throwable $previous = null)
     {

@@ -7,7 +7,7 @@ use Throwable;
 
 class InvalidCustomToken extends AuthException
 {
-    const IDENTIFER = 'INVALID_CUSTOM_TOKEN';
+    public const IDENTIFER = 'INVALID_CUSTOM_TOKEN';
 
     public function __construct($code = 0, Throwable $previous = null)
     {

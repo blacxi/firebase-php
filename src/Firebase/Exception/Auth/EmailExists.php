@@ -7,7 +7,7 @@ use Throwable;
 
 class EmailExists extends AuthException
 {
-    const IDENTIFIER = 'EMAIL_EXISTS';
+    public const IDENTIFIER = 'EMAIL_EXISTS';
 
     public function __construct($code = 0, Throwable $previous = null)
     {

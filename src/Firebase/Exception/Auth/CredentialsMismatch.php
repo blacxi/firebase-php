@@ -7,7 +7,7 @@ use Throwable;
 
 class CredentialsMismatch extends AuthException
 {
-    const IDENTIFER = 'CREDENTIALS_MISMATCH';
+    public const IDENTIFER = 'CREDENTIALS_MISMATCH';
 
     public function __construct($code = 0, Throwable $previous = null)
     {

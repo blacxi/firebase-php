@@ -7,7 +7,7 @@ use Throwable;
 
 class UserDisabled extends AuthException
 {
-    const IDENTIFER = 'USER_DISABLED';
+    public const IDENTIFER = 'USER_DISABLED';
 
     public function __construct($code = 0, Throwable $previous = null)
     {

@@ -11,8 +11,8 @@ use Kreait\Firebase\Value\Provider;
 
 final class UpdateUser implements Request
 {
-    const DISPLAY_NAME = 'DISPLAY_NAME';
-    const PHOTO_URL = 'PHOTO_URL';
+    public const DISPLAY_NAME = 'DISPLAY_NAME';
+    public const PHOTO_URL = 'PHOTO_URL';
 
     use EditUserTrait;
 

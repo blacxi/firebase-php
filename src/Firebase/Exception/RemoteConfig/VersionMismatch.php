@@ -8,7 +8,7 @@ use Throwable;
 
 class VersionMismatch extends OperationAborted
 {
-    const IDENTIFER = 'VERSION_MISMATCH';
+    public const IDENTIFER = 'VERSION_MISMATCH';
 
     public function __construct($message = '', $code = 0, Throwable $previous = null)
     {

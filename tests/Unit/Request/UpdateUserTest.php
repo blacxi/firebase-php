@@ -36,47 +36,47 @@ class UpdateUserTest extends TestCase
         return [
             [
                 $given + ['deletephoto' => true],
-                $expected + ['deleteAttribute' => [UpdateUser::PHOTO_URL]],
+                $expected + ['deleteAttribute' => ['PHOTO_URL']],
             ],
             [
                 $given + ['deletephotourl' => true],
-                $expected + ['deleteAttribute' => [UpdateUser::PHOTO_URL]],
+                $expected + ['deleteAttribute' => ['PHOTO_URL']],
             ],
             [
                 $given + ['removephoto' => true],
-                $expected + ['deleteAttribute' => [UpdateUser::PHOTO_URL]],
+                $expected + ['deleteAttribute' => ['PHOTO_URL']],
             ],
             [
                 $given + ['removephotourl' => true],
-                $expected + ['deleteAttribute' => [UpdateUser::PHOTO_URL]],
+                $expected + ['deleteAttribute' => ['PHOTO_URL']],
             ],
             [
                 $given + ['deleteAttribute' => 'photo'],
-                $expected + ['deleteAttribute' => [UpdateUser::PHOTO_URL]],
+                $expected + ['deleteAttribute' => ['PHOTO_URL']],
             ],
             [
                 $given + ['deleteAttribute' => 'photourl'],
-                $expected + ['deleteAttribute' => [UpdateUser::PHOTO_URL]],
+                $expected + ['deleteAttribute' => ['PHOTO_URL']],
             ],
             [
                 $given + ['deleteAttributes' => ['photo']],
-                $expected + ['deleteAttribute' => [UpdateUser::PHOTO_URL]],
+                $expected + ['deleteAttribute' => ['PHOTO_URL']],
             ],
             [
                 $given + ['deleteAttributes' => ['photourl']],
-                $expected + ['deleteAttribute' => [UpdateUser::PHOTO_URL]],
+                $expected + ['deleteAttribute' => ['PHOTO_URL']],
             ],
             [
                 $given + ['deleteDisplayName' => true],
-                $expected + ['deleteAttribute' => [UpdateUser::DISPLAY_NAME]],
+                $expected + ['deleteAttribute' => ['DISPLAY_NAME']],
             ],
             [
                 $given + ['removeDisplayName' => true],
-                $expected + ['deleteAttribute' => [UpdateUser::DISPLAY_NAME]],
+                $expected + ['deleteAttribute' => ['DISPLAY_NAME']],
             ],
             [
                 $given + ['deleteDisplayName' => true],
-                $expected + ['deleteAttribute' => [UpdateUser::DISPLAY_NAME]],
+                $expected + ['deleteAttribute' => ['DISPLAY_NAME']],
             ],
             [
                 $given + ['deletephone' => true],
@@ -120,11 +120,11 @@ class UpdateUserTest extends TestCase
             ],
             [
                 $given + ['deleteAttribute' => 'displayname'],
-                $expected + ['deleteAttribute' => [UpdateUser::DISPLAY_NAME]],
+                $expected + ['deleteAttribute' => ['DISPLAY_NAME']],
             ],
             [
                 $given + ['deleteAttributes' => ['displayname']],
-                $expected + ['deleteAttribute' => [UpdateUser::DISPLAY_NAME]],
+                $expected + ['deleteAttribute' => ['DISPLAY_NAME']],
             ],
             [
                 $given + ['emailVerified' => true],

@@ -7,7 +7,7 @@ use Throwable;
 
 class InvalidPassword extends AuthException
 {
-    const IDENTIFIER = 'INVALID_PASSWORD';
+    public const IDENTIFIER = 'INVALID_PASSWORD';
 
     public function __construct($code = 0, Throwable $previous = null)
     {

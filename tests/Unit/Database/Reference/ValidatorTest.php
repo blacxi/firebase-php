@@ -30,7 +30,7 @@ class ValidatorTest extends UnitTestCase
 
     public function testValidateDepth()
     {
-        $uri = $this->uri->withPath(str_pad('', (Validator::MAX_DEPTH + 1) * 2, 'x/'));
+        $uri = $this->uri->withPath(str_pad('', 66, 'x/'));
 
         $this->expectException(InvalidArgumentException::class);
         $this->validator->validateUri($uri);
@@ -38,18 +38,31 @@ class ValidatorTest extends UnitTestCase
 
     public function testValidateKeySize()
     {
-        $uri = $this->uri->withPath(str_pad('', Validator::MAX_KEY_SIZE + 1, 'x'));
+        $uri = $this->uri->withPath(str_pad('', 769, 'x'));
 
         $this->expectException(InvalidArgumentException::class);
         $this->validator->validateUri($uri);
     }
 
-    public function testValidateChars()
+    /**
+     * @dataProvider invalidChars
+     */
+    public function testValidateChars(string $invalidChar)
     {
-        $invalid = str_shuffle(Validator::INVALID_KEY_CHARS)[0];
-        $uri = $this->uri->withPath($invalid);
+        $uri = $this->uri->withPath($invalidChar);
 
         $this->expectException(InvalidArgumentException::class);
         $this->validator->validateUri($uri);
+    }
+
+    public function invalidChars()
+    {
+        return [
+            '.' => ['.'],
+            '#' => ['#'],
+            '$' => ['$'],
+            '[' => ['['],
+            ']' => [']'],
+        ];
     }
 }

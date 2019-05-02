@@ -6,7 +6,7 @@ namespace Kreait\Firebase\RemoteConfig;
 
 class DefaultValue implements \JsonSerializable
 {
-    const IN_APP_DEFAULT_VALUE = true;
+    private const IN_APP_DEFAULT_VALUE = true;
 
     /**
      * @var string|bool

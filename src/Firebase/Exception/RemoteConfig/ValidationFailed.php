@@ -8,7 +8,7 @@ use Throwable;
 
 class ValidationFailed extends OperationAborted
 {
-    const IDENTIFER = 'VALIDATION_ERROR';
+    public const IDENTIFER = 'VALIDATION_ERROR';
 
     public function __construct($message = '', $code = 0, Throwable $previous = null)
     {

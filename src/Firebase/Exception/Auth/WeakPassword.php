@@ -7,7 +7,7 @@ use Throwable;
 
 class WeakPassword extends AuthException
 {
-    const IDENTIFIER = 'WEAK_PASSWORD';
+    public const IDENTIFIER = 'WEAK_PASSWORD';
 
     public function __construct($code = 0, Throwable $previous = null)
     {
