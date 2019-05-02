@@ -22,6 +22,7 @@ use Kreait\Firebase\Http\Middleware;
 use Kreait\Firebase\ServiceAccount\Discoverer;
 use Kreait\GcpMetadata;
 use Psr\Http\Message\UriInterface;
+use Psr\SimpleCache\CacheInterface;
 use ReflectionClass;
 
 class Factory
@@ -57,7 +58,7 @@ class Factory
     protected $claims = [];
 
     /**
-     * @var \Psr\SimpleCache\CacheInterface|null
+     * @var CacheInterface|null
      */
     protected $verifierCache;
 
@@ -108,18 +109,14 @@ class Factory
     }
 
     /**
-     * @param \Psr\SimpleCache\CacheInterface $cache
+     * @param CacheInterface $cache
      *
-     * @throws \Kreait\Firebase\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      *
      * @return self
      */
-    public function withVerifierCache($cache): self
+    public function withVerifierCache(CacheInterface $cache): self
     {
-        if (!is_a($cache, $expected = 'Psr\SimpleCache\CacheInterface')) {
-            throw new InvalidArgumentException('The verififier cache must be an instance of '.$expected);
-        }
-
         $factory = clone $this;
         $factory->verifierCache = $cache;
 

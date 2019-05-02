@@ -7,6 +7,7 @@ use Kreait\Firebase\Factory;
 use Kreait\Firebase\ServiceAccount;
 use Kreait\Firebase\ServiceAccount\Discoverer;
 use Kreait\Firebase\Tests\UnitTestCase;
+use Psr\SimpleCache\CacheInterface;
 
 class FactoryTest extends UnitTestCase
 {
@@ -70,7 +71,7 @@ class FactoryTest extends UnitTestCase
 
     public function testItAcceptsAVerifierCache()
     {
-        $cache = $this->createMock('\Psr\SimpleCache\CacheInterface');
+        $cache = $this->createMock(CacheInterface::class);
 
         $factory = $this->factory->withVerifierCache($cache);
 
@@ -92,13 +93,5 @@ class FactoryTest extends UnitTestCase
         ]);
 
         $this->assertInstanceOf(Firebase::class, $factory->create());
-    }
-
-    public function testItRejectsAnInvalidVerifierCache()
-    {
-        $cache = $this->createMock(\stdClass::class);
-
-        $this->expectException(Firebase\Exception\InvalidArgumentException::class);
-        $this->factory->withVerifierCache($cache);
     }
 }
