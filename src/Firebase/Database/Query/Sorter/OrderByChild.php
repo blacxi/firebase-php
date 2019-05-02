@@ -30,7 +30,7 @@ final class OrderByChild implements Sorter
 
         $expression = str_replace('/', '.', $this->childKey);
 
-        uasort($value, function ($a, $b) use ($expression) {
+        uasort($value, static function ($a, $b) use ($expression) {
             return \JmesPath\search($expression, $a) <=> \JmesPath\search($expression, $b);
         });
 

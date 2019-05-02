@@ -98,7 +98,7 @@ final class UpdateUser implements Request
                 case 'deleteproviders':
                 case 'removeprovider':
                 case 'removeproviders':
-                    $request = array_reduce((array) $value, function (self $request, $provider) {
+                    $request = array_reduce((array) $value, static function (self $request, $provider) {
                         return $request->withRemovedProvider($provider);
                     }, $request);
                     break;

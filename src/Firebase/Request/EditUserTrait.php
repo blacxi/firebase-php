@@ -306,7 +306,7 @@ trait EditUserTrait
             'phoneNumber' => $this->phoneNumber,
             'photoUrl' => $this->photoUrl,
             'password' => $this->clearTextPassword,
-        ], function ($value) {
+        ], static function ($value) {
             return $value !== null;
         });
 

@@ -106,7 +106,7 @@ class UserRecord implements \JsonSerializable
 
     private static function userInfoFromResponseData(array $data): array
     {
-        return array_map(function (array $userInfoData) {
+        return array_map(static function (array $userInfoData) {
             return UserInfo::fromResponseData($userInfoData);
         }, $data['providerUserInfo'] ?? []);
     }

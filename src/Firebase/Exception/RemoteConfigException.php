@@ -33,7 +33,7 @@ class RemoteConfigException extends \RuntimeException implements FirebaseExcepti
             $message = $errors['error']['message'] ?? $message;
         }
 
-        $candidates = array_filter(array_map(function ($key, $class) use ($message, $e) {
+        $candidates = array_filter(array_map(static function ($key, $class) use ($message, $e) {
             return stripos($message, $key) !== false
                 ? new $class($message, $e->getCode(), $e)
                 : null;
