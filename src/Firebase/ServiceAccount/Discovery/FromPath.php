@@ -4,6 +4,7 @@ namespace Kreait\Firebase\ServiceAccount\Discovery;
 
 use Kreait\Firebase\Exception\ServiceAccountDiscoveryFailed;
 use Kreait\Firebase\ServiceAccount;
+use Throwable;
 
 class FromPath
 {
@@ -26,7 +27,7 @@ class FromPath
     {
         try {
             return ServiceAccount::fromJsonFile($this->path);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             throw new ServiceAccountDiscoveryFailed($e->getMessage());
         }
     }

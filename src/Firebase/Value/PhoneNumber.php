@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace Kreait\Firebase\Value;
 
+use JsonSerializable;
 use Kreait\Firebase\Exception\InvalidArgumentException;
 use Kreait\Firebase\Value;
 use libphonenumber\NumberParseException;
 use libphonenumber\PhoneNumberFormat;
 use libphonenumber\PhoneNumberUtil;
 
-class PhoneNumber implements Value, \JsonSerializable
+class PhoneNumber implements Value, JsonSerializable
 {
     /**
      * @var string

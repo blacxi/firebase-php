@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Kreait\Firebase\RemoteConfig;
 
+use JsonSerializable;
 use Kreait\Firebase\Exception\InvalidArgumentException;
 use Kreait\Firebase\Value;
 
-final class VersionNumber implements Value, \JsonSerializable
+final class VersionNumber implements Value, JsonSerializable
 {
     /**
      * @var string

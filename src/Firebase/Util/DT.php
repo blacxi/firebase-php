@@ -6,11 +6,13 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use Kreait\Firebase\Exception\InvalidArgumentException;
+use Throwable;
 
 class DT
 {
     public static function toUTCDateTimeImmutable($value): DateTimeImmutable
     {
+        /** @noinspection SuspiciousBinaryOperationInspection */
         $dt = self::fromDateTimeInterface($value)
             ?? self::fromSeconds($value)
             ?? self::fromMicroSeconds($value)
@@ -19,7 +21,7 @@ class DT
 
         try {
             $dt = $dt ?? new DateTimeImmutable((string) $value);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             throw new InvalidArgumentException($e->getMessage());
         }
 

@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Kreait\Firebase\Value;
 
+use JsonSerializable;
 use Kreait\Firebase\Exception\InvalidArgumentException;
 use Kreait\Firebase\Value;
 
-class Uid implements Value, \JsonSerializable
+class Uid implements Value, JsonSerializable
 {
     /**
      * @var string
@@ -16,7 +17,7 @@ class Uid implements Value, \JsonSerializable
 
     public function __construct(string $value)
     {
-        if ($value === '' || \strlen($value) > 128) {
+        if ($value === '' || strlen($value) > 128) {
             throw new InvalidArgumentException('A uid must be a non-empty string with at most 128 characters.');
         }
 

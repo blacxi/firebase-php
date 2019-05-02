@@ -3,12 +3,13 @@
 namespace Kreait\Firebase\Exception;
 
 use Kreait\Firebase\Database\Query;
+use Throwable;
 
 class QueryException extends \RuntimeException implements FirebaseException
 {
     private $query;
 
-    public function __construct(Query $query, $message = '', $code = 0, \Exception $previous = null)
+    public function __construct(Query $query, $message = '', $code = 0, Throwable $previous = null)
     {
         parent::__construct($message, $code, $previous);
 

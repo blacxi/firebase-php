@@ -41,6 +41,6 @@ class RemoteConfigException extends \RuntimeException implements FirebaseExcepti
 
         $fallback = new static($message, $e->getCode(), $e);
 
-        return array_shift($candidates) ?? $fallback;
+        return array_shift($candidates) ?: $fallback;
     }
 }

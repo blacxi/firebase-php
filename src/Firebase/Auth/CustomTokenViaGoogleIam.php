@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Kreait\Firebase\Auth;
 
+use DateTimeInterface;
 use Firebase\Auth\Token\Domain\Generator;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
@@ -33,7 +34,7 @@ class CustomTokenViaGoogleIam implements Generator
         $this->client = $client;
     }
 
-    public function createCustomToken($uid, array $claims = [], \DateTimeInterface $expiresAt = null): Token
+    public function createCustomToken($uid, array $claims = [], DateTimeInterface $expiresAt = null): Token
     {
         $now = time();
         $expiration = $expiresAt ? $expiresAt->getTimestamp() : $now + (60 * 60);

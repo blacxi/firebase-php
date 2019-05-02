@@ -27,6 +27,8 @@ final class User
 
     /**
      * @internal
+     *
+     * @param array $data
      */
     public static function fromArray(array $data): self
     {

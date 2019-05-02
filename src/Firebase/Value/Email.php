@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Kreait\Firebase\Value;
 
+use JsonSerializable;
 use Kreait\Firebase\Exception\InvalidArgumentException;
 use Kreait\Firebase\Value;
 
-class Email implements Value, \JsonSerializable
+class Email implements Value, JsonSerializable
 {
     /**
      * @var string

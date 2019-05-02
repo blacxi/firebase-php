@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Kreait\Firebase\RemoteConfig;
 
+use DateTimeImmutable;
 use Kreait\Firebase\Util\DT;
 
 final class Version
@@ -19,7 +20,7 @@ final class Version
     private $user;
 
     /**
-     * @var \DateTimeImmutable
+     * @var DateTimeImmutable
      */
     private $updatedAt;
 
@@ -80,7 +81,7 @@ final class Version
         return $this->user;
     }
 
-    public function updatedAt(): \DateTimeImmutable
+    public function updatedAt(): DateTimeImmutable
     {
         return $this->updatedAt;
     }

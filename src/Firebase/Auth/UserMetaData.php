@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Kreait\Firebase\Auth;
 
 use DateTimeImmutable;
+use JsonSerializable;
 use Kreait\Firebase\Util\DT;
 
-class UserMetaData implements \JsonSerializable
+class UserMetaData implements JsonSerializable
 {
     /**
      * @var DateTimeImmutable

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Kreait\Firebase\Auth;
 
-class UserInfo implements \JsonSerializable
+use JsonSerializable;
+
+class UserInfo implements JsonSerializable
 {
     public $uid;
     public $displayName;

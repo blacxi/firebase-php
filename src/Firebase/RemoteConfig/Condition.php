@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Kreait\Firebase\RemoteConfig;
 
-class Condition implements \JsonSerializable
+use JsonSerializable;
+
+class Condition implements JsonSerializable
 {
     /**
      * @var string

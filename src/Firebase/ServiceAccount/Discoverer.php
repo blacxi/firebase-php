@@ -5,6 +5,7 @@ namespace Kreait\Firebase\ServiceAccount;
 use Google\Auth\CredentialsLoader;
 use Kreait\Firebase\Exception\ServiceAccountDiscoveryFailed;
 use Kreait\Firebase\ServiceAccount;
+use Throwable;
 
 class Discoverer
 {
@@ -38,7 +39,7 @@ class Discoverer
         $serviceAccount = array_reduce($this->methods, static function ($discovered, callable $method) use (&$messages) {
             try {
                 $discovered = $discovered ?? $method();
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 $messages[] = $e->getMessage();
             }
 

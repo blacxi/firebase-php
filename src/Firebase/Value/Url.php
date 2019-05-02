@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Kreait\Firebase\Value;
 
 use function GuzzleHttp\Psr7\uri_for;
+use JsonSerializable;
 use Kreait\Firebase\Exception\InvalidArgumentException;
 use Kreait\Firebase\Value;
 use Psr\Http\Message\UriInterface;
+use Throwable;
 
-class Url implements Value, \JsonSerializable
+class Url implements Value, JsonSerializable
 {
     /**
      * @var UriInterface
@@ -25,7 +27,7 @@ class Url implements Value, \JsonSerializable
     {
         try {
             return new self(uri_for($value));
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             throw new InvalidArgumentException($e->getMessage());
         }
     }

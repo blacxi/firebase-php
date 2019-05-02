@@ -63,7 +63,7 @@ class ApiException extends \RuntimeException implements FirebaseException
 
     private static function getTargetClassFromStatusCode($code): string
     {
-        if (\in_array($code, [StatusCode::STATUS_UNAUTHORIZED, StatusCode::STATUS_FORBIDDEN], true)) {
+        if (in_array($code, [StatusCode::STATUS_UNAUTHORIZED, StatusCode::STATUS_FORBIDDEN], true)) {
             return PermissionDenied::class;
         }
 

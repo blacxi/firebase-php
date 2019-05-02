@@ -314,9 +314,7 @@ class Factory
 
     protected function createStorage(): Storage
     {
-        $builder = $this->getGoogleCloudServiceBuilder();
-
-        $storageClient = $builder->storage([
+        $storageClient = $this->getGoogleCloudServiceBuilder()->storage([
             'projectId' => $this->getServiceAccount()->getSanitizedProjectId(),
         ]);
 

@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Kreait\Firebase\Value;
 
+use JsonSerializable;
 use Kreait\Firebase\Exception\InvalidArgumentException;
 use Kreait\Firebase\Value;
 
-class ClearTextPassword implements Value, \JsonSerializable
+class ClearTextPassword implements Value, JsonSerializable
 {
     /**
      * @var string
@@ -16,7 +17,7 @@ class ClearTextPassword implements Value, \JsonSerializable
 
     public function __construct(string $value)
     {
-        if (\strlen($value) < 6) {
+        if (strlen($value) < 6) {
             throw new InvalidArgumentException('A password must be a string with at least 6 characters.');
         }
 

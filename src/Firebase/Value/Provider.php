@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Kreait\Firebase\Value;
 
+use JsonSerializable;
 use Kreait\Firebase\Value;
 
-class Provider implements Value, \JsonSerializable
+class Provider implements Value, JsonSerializable
 {
     /**
      * @var string

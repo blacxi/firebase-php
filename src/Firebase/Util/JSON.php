@@ -3,6 +3,7 @@
 namespace Kreait\Firebase\Util;
 
 use Kreait\Firebase\Exception\InvalidArgumentException;
+use Throwable;
 
 class JSON
 {
@@ -26,7 +27,7 @@ class JSON
         $options = $options ?? 0;
         $depth = $depth ?? 512;
 
-        $json = \json_encode($value, $options, $depth);
+        $json = json_encode($value, $options, $depth);
         if ($json === false || json_last_error() !== JSON_ERROR_NONE) {
             throw new InvalidArgumentException(
                 'json_encode error: '.json_last_error_msg());
@@ -53,7 +54,7 @@ class JSON
      */
     public static function decode($json, $assoc = null, $depth = null, $options = null)
     {
-        $data = \json_decode($json, $assoc ?? false, $depth ?? 512, $options ?? 0);
+        $data = json_decode($json, $assoc ?? false, $depth ?? 512, $options ?? 0);
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new InvalidArgumentException(
                 'json_decode error: '.json_last_error_msg());
@@ -75,7 +76,7 @@ class JSON
             self::decode($value);
 
             return true;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return false;
         }
     }

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Kreait\Firebase\RemoteConfig;
 
-class ConditionalValue implements \JsonSerializable
+use JsonSerializable;
+
+class ConditionalValue implements JsonSerializable
 {
     /**
      * @var string

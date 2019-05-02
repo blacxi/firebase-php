@@ -31,7 +31,7 @@ class Middleware
     /**
      * Adds custom authentication to a request.
      *
-     * @param \Kreait\Firebase\Http\Auth $override
+     * @param Auth $override
      *
      * @return callable
      */

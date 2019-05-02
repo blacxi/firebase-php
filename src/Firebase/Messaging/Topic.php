@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Kreait\Firebase\Messaging;
 
+use JsonSerializable;
 use Kreait\Firebase\Exception\Messaging\InvalidArgument;
 
-class Topic implements \JsonSerializable
+class Topic implements JsonSerializable
 {
     /**
      * @var string

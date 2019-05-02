@@ -55,6 +55,6 @@ class AuthException extends \RuntimeException implements FirebaseException
 
         $fallback = new static($message, $e->getCode(), $e);
 
-        return array_shift($candidates) ?? $fallback;
+        return array_shift($candidates) ?: $fallback;
     }
 }
