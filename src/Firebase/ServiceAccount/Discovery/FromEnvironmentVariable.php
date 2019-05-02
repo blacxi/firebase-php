@@ -24,19 +24,19 @@ class FromEnvironmentVariable
      */
     public function __invoke(): ServiceAccount
     {
-        $msg = sprintf('%s: The environment variable "%s"', static::class, $this->value);
+        $msg = \sprintf('%s: The environment variable "%s"', static::class, $this->value);
 
-        if (!($path = getenv($this->value))) {
-            throw new ServiceAccountDiscoveryFailed(sprintf('%s is not set.', $msg));
+        if (!($path = \getenv($this->value))) {
+            throw new ServiceAccountDiscoveryFailed(\sprintf('%s is not set.', $msg));
         }
 
-        $msg .= sprintf(' points to "%s"', $path);
+        $msg .= \sprintf(' points to "%s"', $path);
 
         try {
             return (new FromPath($path))();
         } catch (ServiceAccountDiscoveryFailed $e) {
             throw new ServiceAccountDiscoveryFailed(
-                sprintf('%s, but has errors: %s', $msg, $e->getMessage())
+                \sprintf('%s, but has errors: %s', $msg, $e->getMessage())
             );
         }
     }

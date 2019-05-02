@@ -33,7 +33,7 @@ class Parameter implements JsonSerializable
     {
         if ($defaultValue === null) {
             $defaultValue = DefaultValue::none();
-        } elseif (is_string($defaultValue)) {
+        } elseif (\is_string($defaultValue)) {
             $defaultValue = DefaultValue::with($defaultValue);
         } else {
             throw new InvalidArgumentException('The default value for a remote config parameter must be a string or NULL to use the in-app default.');
@@ -95,9 +95,9 @@ class Parameter implements JsonSerializable
 
     public static function fromArray(array $data): self
     {
-        reset($data);
-        $parameterData = current($data);
-        $parameterName = (string) key($data);
+        \reset($data);
+        $parameterData = \current($data);
+        $parameterName = (string) \key($data);
 
         $parameter = new self();
         $parameter->name = $parameterName;
@@ -107,7 +107,7 @@ class Parameter implements JsonSerializable
             $parameter = $parameter->withConditionalValue(new ConditionalValue($key, $conditionalValueData['value']));
         }
 
-        if (is_string($parameterData['description'] ?? null)) {
+        if (\is_string($parameterData['description'] ?? null)) {
             $parameter->description = $parameterData['description'];
         }
 
@@ -121,7 +121,7 @@ class Parameter implements JsonSerializable
             $conditionalValues[$conditionalValue->conditionName()] = $conditionalValue->jsonSerialize();
         }
 
-        return array_filter([
+        return \array_filter([
             'defaultValue' => $this->defaultValue,
             'conditionalValues' => $conditionalValues,
             'description' => $this->description,

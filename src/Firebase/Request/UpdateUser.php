@@ -50,7 +50,7 @@ final class UpdateUser implements Request
         $request = self::withEditableProperties(new self(), $properties);
 
         foreach ($properties as $key => $value) {
-            $normalizedKey = strtolower((string) preg_replace('/[^a-z]/i', '', $key));
+            $normalizedKey = \strtolower((string) \preg_replace('/[^a-z]/i', '', $key));
             switch ($normalizedKey) {
                 case 'deletephoto':
                 case 'deletephotourl':
@@ -66,7 +66,7 @@ final class UpdateUser implements Request
                 case 'deleteattribute':
                 case 'deleteattributes':
                     foreach ((array) $value as $deleteAttribute) {
-                        $normalizedDeleteAttribute = strtolower((string) preg_replace('/[^a-z]/i', '', (string) $deleteAttribute));
+                        $normalizedDeleteAttribute = \strtolower((string) \preg_replace('/[^a-z]/i', '', (string) $deleteAttribute));
                         switch ($normalizedDeleteAttribute) {
                             case 'displayname':
                                 $request = $request->withRemovedDisplayName();
@@ -100,7 +100,7 @@ final class UpdateUser implements Request
                 case 'deleteproviders':
                 case 'removeprovider':
                 case 'removeproviders':
-                    $request = array_reduce((array) $value, static function (self $request, $provider) {
+                    $request = \array_reduce((array) $value, static function (self $request, $provider) {
                         return $request->withRemovedProvider($provider);
                     }, $request);
                     break;
@@ -169,7 +169,7 @@ final class UpdateUser implements Request
         }
 
         if (!empty($this->attributesToDelete)) {
-            $data['deleteAttribute'] = array_unique($this->attributesToDelete);
+            $data['deleteAttribute'] = \array_unique($this->attributesToDelete);
         }
 
         if (!empty($this->providersToDelete)) {

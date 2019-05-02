@@ -93,7 +93,7 @@ class RemoteConfig
 
         $etag = $response->getHeader('ETag');
 
-        return (string) array_shift($etag);
+        return (string) \array_shift($etag);
     }
 
     /**
@@ -171,7 +171,7 @@ class RemoteConfig
         }
 
         do {
-            $response = $this->request('GET', 'remoteConfig:listVersions', array_filter([
+            $response = $this->request('GET', 'remoteConfig:listVersions', \array_filter([
                 'startTime' => $startTime,
                 'endTime' => $endTime,
                 'endVersionNumber' => $upToVersion,
@@ -195,12 +195,12 @@ class RemoteConfig
 
     private function request(string $method, string $endpoint, array $options = null): ResponseInterface
     {
-        $endpoint = ltrim($endpoint, '/');
-        $url = 'https://firebaseremoteconfig.googleapis.com/v1/projects/'.$this->projectId.'/'.ltrim($endpoint, '/');
+        $endpoint = \ltrim($endpoint, '/');
+        $url = 'https://firebaseremoteconfig.googleapis.com/v1/projects/'.$this->projectId.'/'.\ltrim($endpoint, '/');
 
         $options = $options ?? [];
 
-        $options = array_merge($options, [
+        $options = \array_merge($options, [
             'decode_content' => 'gzip', // sets content-type and deflates response body
         ]);
 

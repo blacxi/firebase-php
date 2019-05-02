@@ -178,7 +178,7 @@ class CloudMessage implements Message
 
     public function jsonSerialize()
     {
-        return array_filter([
+        return \array_filter([
             $this->target->type() => $this->target->value(),
             'data' => $this->data,
             'notification' => $this->notification,

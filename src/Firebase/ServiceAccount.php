@@ -24,7 +24,7 @@ class ServiceAccount
     public function getSanitizedProjectId(): string
     {
         if (!$this->sanitizedProjectId) {
-            $this->sanitizedProjectId = preg_replace('/[^A-Za-z0-9\-]/', '-', $this->projectId);
+            $this->sanitizedProjectId = \preg_replace('/[^A-Za-z0-9\-]/', '-', $this->projectId);
         }
 
         return $this->sanitizedProjectId;
@@ -64,8 +64,8 @@ class ServiceAccount
 
     public function withClientEmail(string $value): self
     {
-        if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
-            throw new InvalidArgumentException(sprintf('"%s" is not a valid email.', $value));
+        if (!\filter_var($value, FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgumentException(\sprintf('"%s" is not a valid email.', $value));
         }
         $serviceAccount = clone $this;
         $serviceAccount->clientEmail = $value;
@@ -104,7 +104,7 @@ class ServiceAccount
             return $value;
         }
 
-        if (is_string($value)) {
+        if (\is_string($value)) {
             try {
                 return self::fromJson($value);
             } catch (InvalidArgumentException $e) {
@@ -112,7 +112,7 @@ class ServiceAccount
             }
         }
 
-        if (is_array($value)) {
+        if (\is_array($value)) {
             return self::fromArray($value);
         }
 
@@ -133,7 +133,7 @@ class ServiceAccount
         if (!empty($missingFields)) {
             throw new InvalidArgumentException(
                 'The following fields are missing/empty in the Service Account specification: "'
-                .implode('", "', $missingFields)
+                .\implode('", "', $missingFields)
                 .'". Please make sure you download the Service Account JSON file from the Service Accounts tab '
                 .'in the Firebase Console, as shown in the documentation on '
                 .'https://firebase.google.com/docs/admin/setup#add_firebase_to_your_app'
@@ -160,13 +160,13 @@ class ServiceAccount
             $file = new SplFileObject($filePath);
             $json = (string) $file->fread($file->getSize());
         } catch (Throwable $e) {
-            throw new InvalidArgumentException(sprintf('%s can not be read: %s', $filePath, $e->getMessage()));
+            throw new InvalidArgumentException(\sprintf('%s can not be read: %s', $filePath, $e->getMessage()));
         }
 
         try {
             return self::fromJson($json);
         } catch (Throwable $e) {
-            throw new InvalidArgumentException(sprintf('%s could not be parsed to a Service Account: %s', $filePath, $e->getMessage()));
+            throw new InvalidArgumentException(\sprintf('%s could not be parsed to a Service Account: %s', $filePath, $e->getMessage()));
         }
     }
 

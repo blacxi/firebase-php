@@ -89,7 +89,7 @@ class Auth
         $count = 0;
 
         do {
-            $response = $this->request('downloadAccount', array_filter([
+            $response = $this->request('downloadAccount', \array_filter([
                 'maxResults' => $batchSize,
                 'nextPageToken' => $pageToken,
             ]));
@@ -299,7 +299,7 @@ class Auth
 
         $headers = $locale ? ['X-Firebase-Locale' => $locale] : null;
 
-        $data = array_filter([
+        $data = \array_filter([
             'requestType' => 'VERIFY_EMAIL',
             'idToken' => (string) $idToken,
             'continueUrl' => (string) $continueUrl,
@@ -318,10 +318,10 @@ class Auth
 
         $headers = $locale ? ['X-Firebase-Locale' => $locale] : null;
 
-        $data = array_filter([
+        $data = \array_filter([
             'email' => (string) $email,
             'requestType' => 'PASSWORD_RESET',
-            'continueUrl' => trim((string) $continueUrl),
+            'continueUrl' => \trim((string) $continueUrl),
         ]);
 
         $this->request('getOobConfirmationCode', $data, $headers);
@@ -391,10 +391,10 @@ class Auth
         } catch (InvalidToken $e) {
             $verifiedToken = $idToken instanceof Token ? $idToken : (new Parser())->parse($idToken);
 
-            if (stripos($e->getMessage(), 'authentication time') !== false) {
+            if (\stripos($e->getMessage(), 'authentication time') !== false) {
                 $authTime = $verifiedToken->getClaim('auth_time', false);
 
-                if ($authTime && !$allowTimeInconsistencies && $authTime > time()) {
+                if ($authTime && !$allowTimeInconsistencies && $authTime > \time()) {
                     throw $e;
                 }
             } else {
@@ -463,7 +463,7 @@ class Auth
 
         $this->request('setAccountInfo', [
             'localId' => (string) $uid,
-            'validSince' => time(),
+            'validSince' => \time(),
         ]);
     }
 
@@ -471,7 +471,7 @@ class Auth
     {
         $uid = $uid instanceof Uid ? $uid : new Uid($uid);
 
-        $providers = array_map(static function ($provider) {
+        $providers = \array_map(static function ($provider) {
             return $provider instanceof Provider ? $provider : new Provider($provider);
         }, (array) $provider);
 
@@ -520,7 +520,7 @@ class Auth
             $data = (object) []; // Ensure '{}' instead of '[]' when JSON encoded
         }
 
-        $options = array_filter([
+        $options = \array_filter([
             'json' => $data,
             'headers' => $headers,
         ]);

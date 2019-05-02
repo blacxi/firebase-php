@@ -36,7 +36,7 @@ class Discoverer
     {
         $messages = [];
 
-        $serviceAccount = array_reduce($this->methods, static function ($discovered, callable $method) use (&$messages) {
+        $serviceAccount = \array_reduce($this->methods, static function ($discovered, callable $method) use (&$messages) {
             try {
                 $discovered = $discovered ?? $method();
             } catch (Throwable $e) {
@@ -47,7 +47,7 @@ class Discoverer
         });
 
         if (!($serviceAccount instanceof ServiceAccount)) {
-            throw new ServiceAccountDiscoveryFailed(implode(PHP_EOL, $messages));
+            throw new ServiceAccountDiscoveryFailed(\implode(PHP_EOL, $messages));
         }
 
         return $serviceAccount;

@@ -23,7 +23,7 @@ final class VersionNumber implements Value, JsonSerializable
     {
         $valueString = (string) $value;
 
-        if (!ctype_digit($valueString)) {
+        if (!\ctype_digit($valueString)) {
             throw new InvalidArgumentException('A version number should only consist of digits');
         }
 

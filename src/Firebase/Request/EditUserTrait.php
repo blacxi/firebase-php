@@ -69,7 +69,7 @@ trait EditUserTrait
     protected static function withEditableProperties($request, array $properties)
     {
         foreach ($properties as $key => $value) {
-            $normalizedKey = strtolower((string) preg_replace('/[^a-z]/i', '', $key));
+            $normalizedKey = \strtolower((string) \preg_replace('/[^a-z]/i', '', $key));
 
             switch ($normalizedKey) {
                 case 'uid':
@@ -208,7 +208,7 @@ trait EditUserTrait
     public function withPhoneNumber($phoneNumber)
     {
         $request = clone $this;
-        $request->phoneNumber = is_string($phoneNumber) ? new PhoneNumber($phoneNumber) : $phoneNumber;
+        $request->phoneNumber = \is_string($phoneNumber) ? new PhoneNumber($phoneNumber) : $phoneNumber;
 
         return $request;
     }
@@ -297,7 +297,7 @@ trait EditUserTrait
             $disableUser = false;
         }
 
-        $data = array_filter([
+        $data = \array_filter([
             'localId' => $this->uid,
             'disableUser' => $disableUser,
             'displayName' => $this->displayName,

@@ -17,11 +17,11 @@ final class OrderByValue implements Sorter
 
     public function modifyValue($value)
     {
-        if (!is_array($value)) {
+        if (!\is_array($value)) {
             return $value;
         }
 
-        asort($value);
+        \asort($value);
 
         return $value;
     }

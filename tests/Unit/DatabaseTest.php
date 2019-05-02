@@ -78,7 +78,7 @@ class DatabaseTest extends UnitTestCase
 
         $this->httpClient
             ->method('send')
-            ->willReturn(new Response(200, [], json_encode($rules)));
+            ->willReturn(new Response(200, [], \json_encode($rules)));
 
         $this->assertEquals($rules, $this->database->getRules()->getRules());
     }

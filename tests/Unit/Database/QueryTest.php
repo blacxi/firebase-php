@@ -59,7 +59,7 @@ class QueryTest extends UnitTestCase
     {
         $this->httpClient
             ->method('send')
-            ->willReturn(new Response(200, [], json_encode('value')));
+            ->willReturn(new Response(200, [], \json_encode('value')));
 
         $this->assertSame('value', $this->query->getValue());
     }
@@ -98,7 +98,7 @@ class QueryTest extends UnitTestCase
         ];
 
         $request = new Request('GET', 'any');
-        $response = new Response(400, [], json_encode($error));
+        $response = new Response(400, [], \json_encode($error));
 
         $this->httpClient
             ->expects($this->once())
@@ -117,7 +117,7 @@ class QueryTest extends UnitTestCase
         ];
 
         $request = new Request('GET', 'any');
-        $response = new Response(400, [], json_encode($error));
+        $response = new Response(400, [], \json_encode($error));
 
         $this->httpClient
             ->expects($this->once())

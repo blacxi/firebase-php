@@ -20,18 +20,18 @@ final class OrderByChild implements Sorter
 
     public function modifyUri(UriInterface $uri): UriInterface
     {
-        return $this->appendQueryParam($uri, 'orderBy', sprintf('"%s"', $this->childKey));
+        return $this->appendQueryParam($uri, 'orderBy', \sprintf('"%s"', $this->childKey));
     }
 
     public function modifyValue($value)
     {
-        if (!is_array($value)) {
+        if (!\is_array($value)) {
             return $value;
         }
 
-        $expression = str_replace('/', '.', $this->childKey);
+        $expression = \str_replace('/', '.', $this->childKey);
 
-        uasort($value, static function ($a, $b) use ($expression) {
+        \uasort($value, static function ($a, $b) use ($expression) {
             return search($expression, $a) <=> search($expression, $b);
         });
 

@@ -47,7 +47,7 @@ class Messaging
      */
     public function send($message): array
     {
-        if (is_array($message)) {
+        if (\is_array($message)) {
             $message = CloudMessage::fromArray($message);
         }
 
@@ -73,7 +73,7 @@ class Messaging
      */
     public function validate($message): array
     {
-        if (is_array($message)) {
+        if (\is_array($message)) {
             $message = CloudMessage::fromArray($message);
         }
 
@@ -146,16 +146,16 @@ class Messaging
             return [$tokenOrTokens];
         }
 
-        if (is_string($tokenOrTokens)) {
+        if (\is_string($tokenOrTokens)) {
             return [RegistrationToken::fromValue($tokenOrTokens)];
         }
 
-        if (is_array($tokenOrTokens)) {
+        if (\is_array($tokenOrTokens)) {
             if (empty($tokenOrTokens)) {
                 throw new InvalidArgument('Empty array of registration tokens.');
             }
 
-            return array_map(static function ($token) {
+            return \array_map(static function ($token) {
                 return $token instanceof RegistrationToken ? $token : RegistrationToken::fromValue($token);
             }, $tokenOrTokens);
         }
@@ -169,7 +169,7 @@ class Messaging
 
         /** @var UriInterface $uri */
         $uri = new Uri('https://fcm.googleapis.com/v1/projects/'.$this->projectId);
-        $path = rtrim($uri->getPath(), '/').'/'.ltrim($endpoint, '/');
+        $path = \rtrim($uri->getPath(), '/').'/'.\ltrim($endpoint, '/');
         $uri = $uri->withPath($path);
 
         try {
@@ -185,13 +185,13 @@ class Messaging
     {
         $options = $options ?? [];
 
-        $options['headers'] = array_merge($options['headers'] ?? [], [
+        $options['headers'] = \array_merge($options['headers'] ?? [], [
             'access_token_auth' => 'true',
         ]);
 
         /** @var UriInterface $uri */
         $uri = new Uri('https://iid.googleapis.com');
-        $path = rtrim($uri->getPath(), '/').'/'.ltrim($endpoint, '/');
+        $path = \rtrim($uri->getPath(), '/').'/'.\ltrim($endpoint, '/');
         $uri = $uri->withPath($path);
 
         try {

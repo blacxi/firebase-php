@@ -36,7 +36,7 @@ class CustomTokenViaGoogleIam implements Generator
 
     public function createCustomToken($uid, array $claims = [], DateTimeInterface $expiresAt = null): Token
     {
-        $now = time();
+        $now = \time();
         $expiration = $expiresAt ? $expiresAt->getTimestamp() : $now + (60 * 60);
 
         $builder = (new Builder())
@@ -59,7 +59,7 @@ class CustomTokenViaGoogleIam implements Generator
         try {
             $response = $this->client->request('POST', $url, [
                 'json' => [
-                    'bytesToSign' => base64_encode($token->getPayload()),
+                    'bytesToSign' => \base64_encode($token->getPayload()),
                 ],
             ]);
         } catch (RequestException $e) {

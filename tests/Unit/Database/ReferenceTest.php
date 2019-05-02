@@ -122,7 +122,7 @@ class ReferenceTest extends UnitTestCase
     {
         $this->httpClient
             ->method('send')
-            ->willReturn(new Response(200, [], json_encode('value')));
+            ->willReturn(new Response(200, [], \json_encode('value')));
 
         $this->assertSame('value', $this->reference->getValue());
     }

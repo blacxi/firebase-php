@@ -66,7 +66,7 @@ class Reference
      */
     public function getKey(): ?string
     {
-        $key = basename($this->getPath());
+        $key = \basename($this->getPath());
 
         return $key !== '' ? $key : null;
     }
@@ -78,7 +78,7 @@ class Reference
      */
     public function getPath(): string
     {
-        return trim($this->uri->getPath(), '/');
+        return \trim($this->uri->getPath(), '/');
     }
 
     /**
@@ -92,7 +92,7 @@ class Reference
      */
     public function getParent(): self
     {
-        $parentPath = dirname($this->getPath());
+        $parentPath = \dirname($this->getPath());
 
         if ($parentPath === '.') {
             throw new OutOfRangeException('Cannot get parent of root reference');
@@ -129,7 +129,7 @@ class Reference
      */
     public function getChild(string $path): self
     {
-        $childPath = sprintf('%s/%s', trim($this->uri->getPath(), '/'), trim($path, '/'));
+        $childPath = \sprintf('%s/%s', \trim($this->uri->getPath(), '/'), \trim($path, '/'));
 
         try {
             return new self($this->uri->withPath($childPath), $this->httpClient, $this->validator);
@@ -270,11 +270,11 @@ class Reference
     {
         $snapshot = $this->shallow()->getSnapshot();
 
-        if (is_array($value = $snapshot->getValue())) {
-            return array_keys($value);
+        if (\is_array($value = $snapshot->getValue())) {
+            return \array_keys($value);
         }
 
-        throw new OutOfRangeException(sprintf('%s has no children with keys', $this));
+        throw new OutOfRangeException(\sprintf('%s has no children with keys', $this));
     }
 
     /**
@@ -359,7 +359,7 @@ class Reference
 
         $newKey = JSON::decode((string) $response->getBody(), true)['name'];
 
-        $newPath = sprintf('%s/%s', $this->uri->getPath(), $newKey);
+        $newPath = \sprintf('%s/%s', $this->uri->getPath(), $newKey);
 
         return new self($this->uri->withPath($newPath), $this->httpClient, $this->validator);
     }

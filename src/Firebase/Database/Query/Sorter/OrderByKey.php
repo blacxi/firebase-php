@@ -17,11 +17,11 @@ final class OrderByKey implements Sorter
 
     public function modifyValue($value)
     {
-        if (!is_array($value)) {
+        if (!\is_array($value)) {
             return $value;
         }
 
-        ksort($value);
+        \ksort($value);
 
         return $value;
     }

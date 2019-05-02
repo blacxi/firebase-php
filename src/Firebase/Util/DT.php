@@ -41,11 +41,11 @@ class DT
 
     private static function fromSeconds($value): ?DateTimeImmutable
     {
-        if (!is_scalar($value)) {
+        if (!\is_scalar($value)) {
             return null;
         }
 
-        if (ctype_digit((string) $value) && strlen((string) $value) === strlen((string) time())) {
+        if (\ctype_digit((string) $value) && \strlen((string) $value) === \strlen((string) \time())) {
             return DateTimeImmutable::createFromFormat('U', (string) $value) ?: null;
         }
 
@@ -54,12 +54,12 @@ class DT
 
     private static function fromMicroSeconds($value): ?DateTimeImmutable
     {
-        if (!is_scalar($value)) {
+        if (!\is_scalar($value)) {
             return null;
         }
 
-        if (ctype_digit((string) $value) && strlen((string) $value) === strlen((string) (time() * 1000))) {
-            return DateTimeImmutable::createFromFormat('U.u', sprintf('%F', (int) $value / 1000)) ?: null;
+        if (\ctype_digit((string) $value) && \strlen((string) $value) === \strlen((string) (\time() * 1000))) {
+            return DateTimeImmutable::createFromFormat('U.u', \sprintf('%F', (int) $value / 1000)) ?: null;
         }
 
         return null;
@@ -67,22 +67,22 @@ class DT
 
     private static function fromMicroTime($value): ?DateTimeImmutable
     {
-        if (!is_scalar($value)) {
+        if (!\is_scalar($value)) {
             return null;
         }
 
-        if (!preg_match('@(?P<msec>^0?\.\d+) (?P<sec>\d+)$@', (string) $value, $matches)) {
+        if (!\preg_match('@(?P<msec>^0?\.\d+) (?P<sec>\d+)$@', (string) $value, $matches)) {
             return null;
         }
 
         $value = (float) $matches['sec'] + (float) $matches['msec'];
 
-        return DateTimeImmutable::createFromFormat('U.u', sprintf('%F', $value)) ?: null;
+        return DateTimeImmutable::createFromFormat('U.u', \sprintf('%F', $value)) ?: null;
     }
 
     private static function fromZero($value): ?DateTimeImmutable
     {
-        if (is_bool($value) || empty($value)) {
+        if (\is_bool($value) || empty($value)) {
             return DateTimeImmutable::createFromFormat('U', '0') ?: null;
         }
 

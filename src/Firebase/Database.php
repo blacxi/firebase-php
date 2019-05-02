@@ -81,7 +81,7 @@ class Database
         }
 
         if (($givenHost = $uri->getHost()) !== ($dbHost = $this->uri->getHost())) {
-            throw new InvalidArgumentException(sprintf(
+            throw new InvalidArgumentException(\sprintf(
                 'The given URI\'s host "%s" is not covered by the database for the host "%s".',
                 $givenHost, $dbHost
             ));
@@ -116,7 +116,7 @@ class Database
     public function updateRules(RuleSet $ruleSet): void
     {
         $this->request('PUT', $this->uri->withPath('.settings/rules'), [
-            'body' => json_encode($ruleSet, JSON_PRETTY_PRINT),
+            'body' => \json_encode($ruleSet, JSON_PRETTY_PRINT),
         ]);
     }
 
