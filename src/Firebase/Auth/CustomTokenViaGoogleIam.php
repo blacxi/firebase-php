@@ -6,12 +6,14 @@ namespace Kreait\Firebase\Auth;
 
 use Firebase\Auth\Token\Domain\Generator;
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use Kreait\Firebase\Exception\AuthException;
 use Kreait\Firebase\Util\JSON;
 use Lcobucci\JWT\Builder;
 use Lcobucci\JWT\Parser;
 use Lcobucci\JWT\Token;
+use Throwable;
 
 class CustomTokenViaGoogleIam implements Generator
 {
@@ -61,6 +63,8 @@ class CustomTokenViaGoogleIam implements Generator
             ]);
         } catch (RequestException $e) {
             throw AuthException::fromRequestException($e);
+        } catch (Throwable | GuzzleException $e) {
+            throw new AuthException($e->getMessage(), $e->getCode(), $e);
         }
 
         $result = JSON::decode((string) $response->getBody(), true);

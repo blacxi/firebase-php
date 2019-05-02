@@ -347,6 +347,7 @@ class Factory
 
     private function instantiate(string $class, ...$arguments)
     {
+        /** @noinspection PhpUnhandledExceptionInspection */
         $rc = new ReflectionClass($class);
         $constructor = $rc->getConstructor();
 
