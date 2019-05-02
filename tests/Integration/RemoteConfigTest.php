@@ -153,7 +153,7 @@ CONFIG;
 
     public function testListVersions()
     {
-        foreach ($this->remoteConfig->listVersions() as $version) {
+        foreach ($this->remoteConfig->listVersions(['limit' => 1]) as $version) {
             $this->assertInstanceOf(RemoteConfig\Version::class, $version);
             break;
         }
@@ -161,7 +161,7 @@ CONFIG;
 
     public function testGetVersion()
     {
-        foreach ($this->remoteConfig->listVersions() as $first) {
+        foreach ($this->remoteConfig->listVersions(['limit' => 1]) as $first) {
             break;
         }
 

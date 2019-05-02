@@ -4,37 +4,49 @@ declare(strict_types=1);
 
 namespace Kreait\Firebase;
 
+use Generator;
+use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
 use Kreait\Firebase\Exception\RemoteConfig\ValidationFailed;
 use Kreait\Firebase\Exception\RemoteConfig\VersionNotFound;
 use Kreait\Firebase\Exception\RemoteConfigException;
-use Kreait\Firebase\RemoteConfig\ApiClient;
 use Kreait\Firebase\RemoteConfig\FindVersions;
 use Kreait\Firebase\RemoteConfig\Template;
 use Kreait\Firebase\RemoteConfig\Version;
 use Kreait\Firebase\RemoteConfig\VersionNumber;
 use Kreait\Firebase\Util\JSON;
+use Psr\Http\Message\ResponseInterface;
+use Throwable;
 
 /**
  * The Firebase Remote Config.
  *
  * @see https://firebase.google.com/docs/remote-config/use-config-rest
- * @see https://firebase.google.com/docs/remote-config/rest-reference
+ * @see https://firebase.google.com/docs/reference/remote-config/rest/v1/projects
+ * @see https://firebase.google.com/docs/reference/remote-config/rest/v1/projects.remoteConfig
  */
 class RemoteConfig
 {
     /**
-     * @var ApiClient
+     * @var string
      */
-    private $client;
+    private $projectId;
 
-    private function __construct(ApiClient $client)
+    /**
+     * @var ClientInterface
+     */
+    private $httpClient;
+
+    private function __construct(string $projectId, ClientInterface $httpClient)
     {
-        $this->client = $client;
+        $this->projectId = $projectId;
+        $this->httpClient = $httpClient;
     }
 
     public function get(): Template
     {
-        return Template::fromResponse($this->client->getTemplate());
+        return Template::fromResponse($this->request('GET', 'remoteConfig'));
     }
 
     /**
@@ -44,11 +56,20 @@ class RemoteConfig
      *
      * @throws ValidationFailed if the validation failed
      */
-    public function validate($template)
+    public function validate($template): void
     {
         $template = $template instanceof Template ? $template : Template::fromArray($template);
 
-        $this->client->validateTemplate($template);
+        $this->request('PUT', 'remoteConfig', [
+            'headers' => [
+                'Content-Type' => 'application/json; UTF-8',
+                'If-Match' => $template->getEtag(),
+            ],
+            'query' => [
+                'validate_only' => 'true',
+            ],
+            'body' => JSON::encode($template),
+        ]);
     }
 
     /**
@@ -62,7 +83,13 @@ class RemoteConfig
     {
         $template = $template instanceof Template ? $template : Template::fromArray($template);
 
-        $response = $this->client->publishTemplate($template);
+        $response = $this->request('PUT', 'remoteConfig', [
+            'headers' => [
+                'Content-Type' => 'application/json; UTF-8',
+                'If-Match' => $template->getEtag(),
+            ],
+            'body' => JSON::encode($template),
+        ]);
 
         $etag = $response->getHeader('ETag');
 
@@ -108,7 +135,11 @@ class RemoteConfig
             ? $versionNumber
             : VersionNumber::fromValue($versionNumber);
 
-        $response = $this->client->rollbackToVersion($versionNumber);
+        $response = $this->request('POST', 'remoteConfig:rollback', [
+            'json' => [
+                'version_number' => (string) $versionNumber,
+            ],
+        ]);
 
         return Template::fromResponse($response);
     }
@@ -116,16 +147,37 @@ class RemoteConfig
     /**
      * @param FindVersions|array $query
      *
-     * @return \Generator|Version[]
+     * @return Generator|Version[]
      */
-    public function listVersions($query = null): \Generator
+    public function listVersions($query = null): Generator
     {
         $query = $query instanceof FindVersions ? $query : FindVersions::fromArray((array) $query);
         $pageToken = null;
         $count = 0;
 
+        $startTime = null;
+        if ($since = $query->since()) {
+            $startTime = $since->format('Y-m-d\TH:i:s.v\Z');
+        }
+
+        $endTime = null;
+        if ($until = $query->until()) {
+            $endTime = $until->format('Y-m-d\TH:i:s.v\Z');
+        }
+
+        $upToVersion = null;
+        if ($query->upToVersion()) {
+            $upToVersion = (string) $upToVersion;
+        }
+
         do {
-            $response = $this->client->listVersions($query, $pageToken);
+            $response = $this->request('GET', 'remoteConfig:listVersions', array_filter([
+                'startTime' => $startTime,
+                'endTime' => $endTime,
+                'endVersionNumber' => $upToVersion,
+                'nextPageToken' => $pageToken,
+            ]));
+
             $result = JSON::decode((string) $response->getBody(), true);
 
             foreach ((array) ($result['versions'] ?? []) as $versionData) {
@@ -139,5 +191,25 @@ class RemoteConfig
 
             $pageToken = $result['nextPageToken'] ?? null;
         } while ($pageToken);
+    }
+
+    private function request(string $method, string $endpoint, array $options = null): ResponseInterface
+    {
+        $endpoint = ltrim($endpoint, '/');
+        $url = 'https://firebaseremoteconfig.googleapis.com/v1/projects/'.$this->projectId.'/'.ltrim($endpoint, '/');
+
+        $options = $options ?? [];
+
+        $options = array_merge($options, [
+            'decode_content' => 'gzip', // sets content-type and deflates response body
+        ]);
+
+        try {
+            return $this->httpClient->request($method, $url, $options);
+        } catch (RequestException $e) {
+            throw RemoteConfigException::fromRequestException($e);
+        } catch (Throwable | GuzzleException $e) {
+            throw new RemoteConfigException($e->getMessage(), $e->getCode(), $e);
+        }
     }
 }

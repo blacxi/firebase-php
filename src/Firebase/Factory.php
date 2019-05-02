@@ -248,11 +248,13 @@ class Factory
 
     protected function createRemoteConfig(): RemoteConfig
     {
+        $projectId = $this->getServiceAccount()->getSanitizedProjectId();
+
         $http = $this->createApiClient([
             'base_uri' => 'https://firebaseremoteconfig.googleapis.com/v1/projects/'.$this->getServiceAccount()->getSanitizedProjectId().'/remoteConfig',
         ]);
 
-        return $this->instantiate(RemoteConfig::class, new RemoteConfig\ApiClient($http));
+        return $this->instantiate(RemoteConfig::class, $projectId, $http);
     }
 
     protected function createMessaging(): Messaging

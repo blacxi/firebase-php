@@ -1,8 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Kreait\Firebase\Tests\Unit\RemoteConfig;
+namespace Kreait\Firebase\Tests\Unit;
 
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\RequestException;
@@ -11,25 +9,23 @@ use GuzzleHttp\Psr7\Response;
 use Kreait\Firebase\Exception\RemoteConfig\OperationAborted;
 use Kreait\Firebase\Exception\RemoteConfig\PermissionDenied;
 use Kreait\Firebase\Exception\RemoteConfigException;
-use Kreait\Firebase\RemoteConfig\ApiClient;
+use Kreait\Firebase\RemoteConfig;
 use Kreait\Firebase\Tests\UnitTestCase;
 
-class ApiClientTest extends UnitTestCase
+class RemoteConfigTest extends UnitTestCase
 {
-    /**
-     * @var ClientInterface
-     */
     private $http;
 
     /**
-     * @var ApiClient
+     * @var RemoteConfig
      */
-    private $client;
+    private $remoteConfig;
 
     protected function setUp(): void
     {
         $this->http = $this->createMock(ClientInterface::class);
-        $this->client = new ApiClient($this->http);
+
+        $this->remoteConfig = $this->instantiate(RemoteConfig::class, 'project-id', $this->http);
     }
 
     /**
@@ -39,12 +35,12 @@ class ApiClientTest extends UnitTestCase
      */
     public function testCatchRequestException($requestException, $expectedClass)
     {
-        $this->http->expects($this->once())
+        $this->http
             ->method('request')
             ->willThrowException($requestException);
 
         try {
-            $this->client->getTemplate();
+            $this->remoteConfig->get();
         } catch (\Throwable $e) {
             $this->assertInstanceOf(RemoteConfigException::class, $e);
             $this->assertInstanceOf($expectedClass, $e);
@@ -53,13 +49,13 @@ class ApiClientTest extends UnitTestCase
 
     public function testCatchThrowable()
     {
-        $this->http->expects($this->once())
+        $this->http
             ->method('request')
             ->willThrowException(new \Exception());
 
         $this->expectException(RemoteConfigException::class);
 
-        $this->client->getTemplate();
+        $this->remoteConfig->get();
     }
 
     public function requestExceptions(): array

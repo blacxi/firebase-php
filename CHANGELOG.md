@@ -7,6 +7,7 @@
   not meant to be instantiated directly. In order to be able to change the internals of the classes without breaking
   them for others, the following components are not directly instatiable anymore: `Kreait\Firebase\Auth`, 
   `Kreait\Firebase\Database`, `Kreait\Firebase\Messaging`, `Kreait\Firebase\RemoteConfig`, `Kreait\Firebase\Storage`
+* The components are the only points of interaction with the Firebase APIs (all `ApiClient` classes have been removed)
 * Removed depreacted classes:
   * `Kreait\Firebase\Messaging\ConditionalMessage`, use `Kreait\Firebase\CloudMessage`
   * `Kreait\Firebase\Messaging\MessageToRegistrationToken`, use `Kreait\Firebase\CloudMessage`
