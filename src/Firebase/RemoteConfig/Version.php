@@ -100,10 +100,7 @@ final class Version
         return $this->updateType;
     }
 
-    /**
-     * @return VersionNumber|null
-     */
-    public function rollbackSource()
+    public function rollbackSource(): ?VersionNumber
     {
         return $this->rollbackSource;
     }

@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Kreait\Firebase\RemoteConfig;
 
+use JsonSerializable;
 use Kreait\Firebase\Exception\InvalidArgumentException;
 use Kreait\Firebase\Util\JSON;
 use Psr\Http\Message\ResponseInterface;
 
-class Template implements \JsonSerializable
+class Template implements JsonSerializable
 {
     /**
      * @var string
@@ -37,7 +38,7 @@ class Template implements \JsonSerializable
     public static function fromResponse(ResponseInterface $response): self
     {
         $etagHeader = $response->getHeader('ETag');
-        $etag = array_shift($etagHeader) ?? '*';
+        $etag = array_shift($etagHeader) ?: '*';
         $data = JSON::decode((string) $response->getBody(), true);
 
         return self::fromArray($data, $etag);
@@ -64,7 +65,7 @@ class Template implements \JsonSerializable
         return $this->etag;
     }
 
-    public function withParameter(Parameter $parameter)
+    public function withParameter(Parameter $parameter): Template
     {
         $this->assertThatAllConditionalValuesAreValid($parameter);
 
@@ -74,7 +75,7 @@ class Template implements \JsonSerializable
         return $template;
     }
 
-    public function withCondition(Condition $condition)
+    public function withCondition(Condition $condition): Template
     {
         $template = clone $this;
         $template->conditions[$condition->name()] = $condition;
@@ -82,7 +83,7 @@ class Template implements \JsonSerializable
         return $template;
     }
 
-    private function assertThatAllConditionalValuesAreValid(Parameter $parameter)
+    private function assertThatAllConditionalValuesAreValid(Parameter $parameter): void
     {
         foreach ($parameter->conditionalValues() as $conditionalValue) {
             if (!array_key_exists($conditionalValue->conditionName(), $this->conditions)) {

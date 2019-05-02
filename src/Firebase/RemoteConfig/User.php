@@ -38,26 +38,17 @@ final class User
         return $new;
     }
 
-    /**
-     * @return string|null
-     */
-    public function name()
+    public function name(): ?string
     {
         return $this->name;
     }
 
-    /**
-     * @return Email|null
-     */
-    public function email()
+    public function email(): ?Email
     {
         return $this->email;
     }
 
-    /**
-     * @return UriInterface|null
-     */
-    public function imageUri()
+    public function imageUri(): ?UriInterface
     {
         return $this->imageUri;
     }

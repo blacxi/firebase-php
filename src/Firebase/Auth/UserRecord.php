@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace Kreait\Firebase\Auth;
 
 use DateTimeImmutable;
+use JsonSerializable;
 use Kreait\Firebase\Util\DT;
 use Kreait\Firebase\Util\JSON;
 
-class UserRecord implements \JsonSerializable
+class UserRecord implements JsonSerializable
 {
     /**
      * @var string
@@ -74,7 +75,7 @@ class UserRecord implements \JsonSerializable
     {
     }
 
-    public static function fromResponseData(array $data)
+    public static function fromResponseData(array $data): self
     {
         $record = new self();
         $record->uid = $data['localId'];

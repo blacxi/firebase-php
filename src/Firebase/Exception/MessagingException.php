@@ -80,10 +80,7 @@ class MessagingException extends \RuntimeException implements FirebaseException
         return $e;
     }
 
-    /**
-     * @return ResponseInterface|null
-     */
-    public function response()
+    public function response(): ?ResponseInterface
     {
         return $this->response;
     }
