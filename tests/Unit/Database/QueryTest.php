@@ -2,34 +2,23 @@
 
 namespace Kreait\Firebase\Tests\Unit\Database;
 
+use Exception;
+use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Uri;
-use Kreait\Firebase\Database\ApiClient;
 use Kreait\Firebase\Database\Query;
 use Kreait\Firebase\Database\Reference;
-use Kreait\Firebase\Database\Snapshot;
-use Kreait\Firebase\Exception\ApiException;
 use Kreait\Firebase\Exception\IndexNotDefined;
 use Kreait\Firebase\Exception\QueryException;
 use Kreait\Firebase\Tests\UnitTestCase;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\UriInterface;
 
 class QueryTest extends UnitTestCase
 {
-    /**
-     * @var Uri
-     */
     protected $uri;
-
-    /**
-     * @var Reference|\PHPUnit_Framework_MockObject_MockObject
-     */
     protected $reference;
-
-    /**
-     * @var ApiClient|\PHPUnit_Framework_MockObject_MockObject
-     */
-    protected $apiClient;
+    protected $httpClient;
 
     /**
      * @var Query
@@ -41,14 +30,13 @@ class QueryTest extends UnitTestCase
         $this->uri = new Uri('http://domain.tld/some/path');
 
         $reference = $this->createMock(Reference::class);
-        $reference->expects($this->any())->method('getURI')->willReturn($this->uri);
+        $reference->method('getURI')->willReturn($this->uri);
 
         $this->reference = $reference;
 
-        $apiClient = $this->createMock(ApiClient::class);
-        $this->apiClient = $apiClient;
+        $this->httpClient = $this->createMock(ClientInterface::class);
 
-        $this->query = new Query($this->reference, $this->apiClient);
+        $this->query = new Query($this->reference, $this->httpClient);
     }
 
     public function testGetReference()
@@ -58,16 +46,20 @@ class QueryTest extends UnitTestCase
 
     public function testGetSnapshot()
     {
-        $this->apiClient->expects($this->any())->method('get')->with($this->anything())->willReturn('value');
+        $this->httpClient
+            ->method('send')
+            ->willReturn(new Response(200, [], '"value"'));
 
         $snapshot = $this->query->orderByKey()->equalTo(2)->getSnapshot();
 
-        $this->assertInstanceOf(Snapshot::class, $snapshot);
+        $this->assertSame('value', $snapshot->getValue());
     }
 
     public function testGetValue()
     {
-        $this->apiClient->expects($this->any())->method('get')->with($this->anything())->willReturn('value');
+        $this->httpClient
+            ->method('send')
+            ->willReturn(new Response(200, [], json_encode('value')));
 
         $this->assertSame('value', $this->query->getValue());
     }
@@ -76,7 +68,6 @@ class QueryTest extends UnitTestCase
     {
         $uri = $this->query->getUri();
 
-        $this->assertInstanceOf(UriInterface::class, $uri);
         $this->assertSame((string) $uri, (string) $this->query);
     }
 
@@ -102,12 +93,17 @@ class QueryTest extends UnitTestCase
 
     public function testWrapsApiExceptions()
     {
-        $exception = $this->createMock(ApiException::class);
+        $error = [
+            'error' => 'Something happened',
+        ];
 
-        $this->apiClient
-            ->expects($this->any())
-            ->method('get')->with($this->anything())
-            ->willThrowException($exception);
+        $request = new Request('GET', 'any');
+        $response = new Response(400, [], json_encode($error));
+
+        $this->httpClient
+            ->expects($this->once())
+            ->method('send')
+            ->willThrowException(RequestException::create($request, $response));
 
         $this->expectException(QueryException::class);
 
@@ -116,16 +112,42 @@ class QueryTest extends UnitTestCase
 
     public function testIndexNotDefined()
     {
-        $request = $this->createMock(RequestInterface::class);
+        $error = [
+            'error' => 'Index not defined, add ".indexOn": ".value", for path "/some/path", to the rules',
+        ];
 
-        $exception = new ApiException($request, 'foo index not defined bar');
+        $request = new Request('GET', 'any');
+        $response = new Response(400, [], json_encode($error));
 
-        $this->apiClient
-            ->expects($this->any())
-            ->method('get')->with($this->anything())
-            ->willThrowException($exception);
+        $this->httpClient
+            ->expects($this->once())
+            ->method('send')
+            ->willThrowException(RequestException::create($request, $response));
 
         $this->expectException(IndexNotDefined::class);
+        $this->query->getSnapshot();
+    }
+
+    public function testCatchRequestException()
+    {
+        $request = new Request('GET', 'foo');
+
+        $this->httpClient
+            ->method($this->anything())
+            ->willThrowException(new RequestException('foo', $request));
+
+        $this->expectException(QueryException::class);
+
+        $this->query->getSnapshot();
+    }
+
+    public function testCatchAnyException()
+    {
+        $this->httpClient
+            ->method($this->anything())
+            ->willThrowException(new Exception());
+
+        $this->expectException(QueryException::class);
 
         $this->query->getSnapshot();
     }

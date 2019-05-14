@@ -30,7 +30,7 @@ class ReferenceTest extends DatabaseTestCase
         $ref = $this->ref->getChild(__FUNCTION__.'/'.$key);
         $ref->set($value);
 
-        $this->assertSame($value, $ref->getValue());
+        $this->assertEquals($value, $ref->getValue());
     }
 
     public function testUpdate()

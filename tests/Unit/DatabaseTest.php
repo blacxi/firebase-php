@@ -2,25 +2,22 @@
 
 namespace Kreait\Firebase\Tests\Unit;
 
+use Exception;
+use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Uri;
 use Kreait\Firebase\Database;
-use Kreait\Firebase\Database\ApiClient;
-use Kreait\Firebase\Database\Reference;
 use Kreait\Firebase\Database\RuleSet;
+use Kreait\Firebase\Exception\ApiException;
 use Kreait\Firebase\Exception\InvalidArgumentException;
 use Kreait\Firebase\Tests\UnitTestCase;
+use OutOfRangeException;
 
 class DatabaseTest extends UnitTestCase
 {
-    /**
-     * @var Uri
-     */
-    private $uri;
-
-    /**
-     * @var ApiClient|\PHPUnit_Framework_MockObject_MockObject
-     */
-    private $apiClient;
+    private $httpClient;
 
     /**
      * @var Database
@@ -29,15 +26,15 @@ class DatabaseTest extends UnitTestCase
 
     protected function setUp(): void
     {
-        $this->uri = new Uri('https://database-uri.tld');
-        $this->apiClient = $this->createMock(ApiClient::class);
+        $uri = new Uri('https://database-uri.tld');
+        $this->httpClient = $this->createMock(ClientInterface::class);
 
-        $this->database = $this->instantiate(Database::class, $this->uri, $this->apiClient);
+        $this->database = $this->instantiate(Database::class, $uri, $this->httpClient);
     }
 
     public function testGetReference()
     {
-        $this->assertInstanceOf(Reference::class, $this->database->getReference('any'));
+        $this->assertSame('any', $this->database->getReference('any')->getKey());
     }
 
     public function testGetReferenceWithInvalidPath()
@@ -48,10 +45,16 @@ class DatabaseTest extends UnitTestCase
 
     public function testGetReferenceFromUrl()
     {
-        $this->assertInstanceOf(
-            Reference::class,
-            $this->database->getReferenceFromUrl('https://database-uri.tld/foo/bar')
-        );
+        $url = 'https://database-uri.tld/foo/bar';
+
+        $reference = $this->database->getReferenceFromUrl($url);
+
+        $this->assertSame($url, (string) $reference);
+        $this->assertSame('bar', $reference->getKey());
+        $this->assertSame('foo', $reference->getParent()->getKey());
+
+        $this->expectException(OutOfRangeException::class);
+        $reference->getParent()->getParent();
     }
 
     public function testGetReferenceFromInvalidUrl()
@@ -71,13 +74,36 @@ class DatabaseTest extends UnitTestCase
 
     public function testGetRules()
     {
-        $this->apiClient->expects($this->once())
-            ->method('get')
-            ->with($this->uri->withPath('.settings/rules'))
-            ->willReturn($expected = RuleSet::default()->getRules());
+        $rules = RuleSet::default()->getRules();
 
-        $ruleSet = $this->database->getRules();
+        $this->httpClient
+            ->method('send')
+            ->willReturn(new Response(200, [], json_encode($rules)));
 
-        $this->assertEquals($expected, $ruleSet->getRules());
+        $this->assertEquals($rules, $this->database->getRules()->getRules());
+    }
+
+    public function testCatchRequestException()
+    {
+        $request = new Request('GET', 'foo');
+
+        $this->httpClient
+            ->method($this->anything())
+            ->willThrowException(new RequestException('foo', $request));
+
+        $this->expectException(ApiException::class);
+
+        $this->database->getRules();
+    }
+
+    public function testCatchAnyException()
+    {
+        $this->httpClient
+            ->method($this->anything())
+            ->willThrowException(new Exception());
+
+        $this->expectException(ApiException::class);
+
+        $this->database->getRules();
     }
 }

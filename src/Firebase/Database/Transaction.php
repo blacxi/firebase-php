@@ -4,25 +4,32 @@ declare(strict_types=1);
 
 namespace Kreait\Firebase\Database;
 
+use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Psr7\Request;
 use Kreait\Firebase\Exception\ApiException;
 use Kreait\Firebase\Exception\Database\ReferenceHasNotBeenSnapshotted;
 use Kreait\Firebase\Exception\Database\TransactionFailed;
+use Kreait\Firebase\Util\JSON;
+use Psr\Http\Message\ResponseInterface;
+use Throwable;
 
 class Transaction
 {
     /**
-     * @var ApiClient
+     * @var ClientInterface
      */
-    private $apiClient;
+    private $httpClient;
 
     /**
      * @var string[]
      */
     private $etags;
 
-    public function __construct(ApiClient $apiClient)
+    public function __construct(ClientInterface $httpClient)
     {
-        $this->apiClient = $apiClient;
+        $this->httpClient = $httpClient;
         $this->etags = [];
     }
 
@@ -30,11 +37,15 @@ class Transaction
     {
         $uri = (string) $reference->getUri();
 
-        $result = $this->apiClient->getWithETag($uri);
+        $response = $this->request('GET', $uri, [
+            'headers' => [
+                'X-Firebase-ETag' => 'true',
+            ],
+        ]);
 
-        $this->etags[$uri] = $result['etag'];
+        $this->etags[$uri] = $response->getHeaderLine('ETag');
 
-        return new Snapshot($reference, $result['value']);
+        return new Snapshot($reference, JSON::decode((string) $response->getBody(), true));
     }
 
     /**
@@ -43,15 +54,18 @@ class Transaction
      *
      * @throws ReferenceHasNotBeenSnapshotted
      * @throws TransactionFailed
-     *
-     * @return mixed
      */
-    public function set(Reference $reference, $value)
+    public function set(Reference $reference, $value): void
     {
         $etag = $this->getEtagForReference($reference);
 
         try {
-            return $this->apiClient->setWithEtag($reference->getUri(), $value, $etag);
+            $this->request('PUT', $reference->getUri(), [
+                'headers' => [
+                    'if-match' => $etag,
+                ],
+                'json' => $value,
+            ]);
         } catch (ApiException $e) {
             throw TransactionFailed::forReferenceAndApiException($reference, $e);
         }
@@ -61,12 +75,16 @@ class Transaction
      * @throws ReferenceHasNotBeenSnapshotted
      * @throws TransactionFailed
      */
-    public function remove(Reference $reference)
+    public function remove(Reference $reference): void
     {
         $etag = $this->getEtagForReference($reference);
 
         try {
-            $this->apiClient->removeWithEtag($reference->getUri(), $etag);
+            $this->request('DELETE', $reference->getUri(), [
+                'headers' => [
+                    'if-match' => $etag,
+                ],
+            ]);
         } catch (ApiException $e) {
             throw TransactionFailed::forReferenceAndApiException($reference, $e);
         }
@@ -84,5 +102,20 @@ class Transaction
         }
 
         throw ReferenceHasNotBeenSnapshotted::with($reference);
+    }
+
+    private function request(string $method, $uri, array $options = null): ResponseInterface
+    {
+        $options = $options ?? [];
+
+        $request = new Request($method, $uri);
+
+        try {
+            return $this->httpClient->send($request, $options);
+        } catch (RequestException $e) {
+            throw ApiException::wrapRequestException($e);
+        } catch (Throwable | GuzzleException $e) {
+            throw new ApiException($request, $e->getMessage(), $e->getCode(), $e);
+        }
     }
 }

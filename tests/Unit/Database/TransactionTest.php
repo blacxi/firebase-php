@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Kreait\Firebase\Tests\Unit\Database;
 
-use Kreait\Firebase\Database\ApiClient;
+use GuzzleHttp\ClientInterface;
 use Kreait\Firebase\Database\Reference;
 use Kreait\Firebase\Database\Transaction;
 use Kreait\Firebase\Exception\Database\ReferenceHasNotBeenSnapshotted;
@@ -15,9 +15,9 @@ class TransactionTest extends TestCase
     /** @var Transaction */
     private $transaction;
 
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->transaction = new Transaction($this->createMock(ApiClient::class));
+        $this->transaction = new Transaction($this->createMock(ClientInterface::class));
     }
 
     public function testAReferenceCanNotBeChangedIfItHasNotBeenSnapshotted()

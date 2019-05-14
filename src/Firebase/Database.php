@@ -2,14 +2,21 @@
 
 namespace Kreait\Firebase;
 
+use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Psr7\Request;
 use function GuzzleHttp\Psr7\uri_for;
-use Kreait\Firebase\Database\ApiClient;
 use Kreait\Firebase\Database\Reference;
 use Kreait\Firebase\Database\RuleSet;
 use Kreait\Firebase\Database\Transaction;
+use Kreait\Firebase\Exception\ApiException;
 use Kreait\Firebase\Exception\InvalidArgumentException;
 use Kreait\Firebase\Exception\OutOfRangeException;
+use Kreait\Firebase\Util\JSON;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
+use Throwable;
 
 /**
  * The Firebase Realtime Database.
@@ -18,29 +25,22 @@ use Psr\Http\Message\UriInterface;
  */
 class Database
 {
-    const SERVER_TIMESTAMP = ['.sv' => 'timestamp'];
+    public const SERVER_TIMESTAMP = ['.sv' => 'timestamp'];
 
     /**
-     * @var ApiClient
+     * @var ClientInterface
      */
-    private $client;
+    private $httpClient;
 
     /**
      * @var UriInterface
      */
     private $uri;
 
-    /**
-     * Creates a new database instance for the given database URI
-     * which is accessed by the given API client.
-     *
-     * @param UriInterface $uri
-     * @param ApiClient $client
-     */
-    private function __construct(UriInterface $uri, ApiClient $client)
+    private function __construct(UriInterface $uri, ClientInterface $httpClient)
     {
         $this->uri = $uri;
-        $this->client = $client;
+        $this->httpClient = $httpClient;
     }
 
     /**
@@ -56,11 +56,7 @@ class Database
      */
     public function getReference(string $path = null): Reference
     {
-        try {
-            return new Reference($this->uri->withPath($path ?? ''), $this->client);
-        } catch (\InvalidArgumentException $e) {
-            throw new InvalidArgumentException($e->getMessage(), $e->getCode(), $e);
-        }
+        return new Reference($this->uri->withPath($path ?? ''), $this->httpClient);
     }
 
     /**
@@ -103,7 +99,9 @@ class Database
      */
     public function getRules(): RuleSet
     {
-        $rules = $this->client->get($this->uri->withPath('.settings/rules'));
+        $response = $this->request('GET', $this->uri->withPath('.settings/rules'));
+
+        $rules = JSON::decode((string) $response->getBody(), true);
 
         return RuleSet::fromArray($rules);
     }
@@ -115,14 +113,31 @@ class Database
      *
      * @param RuleSet $ruleSet
      */
-    public function updateRules(RuleSet $ruleSet)
+    public function updateRules(RuleSet $ruleSet): void
     {
-        $this->client->updateRules($this->uri->withPath('.settings/rules'), $ruleSet);
+        $this->request('PUT', $this->uri->withPath('.settings/rules'), [
+            'body' => json_encode($ruleSet, JSON_PRETTY_PRINT),
+        ]);
+    }
+
+    private function request(string $method, $uri, array $options = null): ResponseInterface
+    {
+        $options = $options ?? [];
+
+        $request = new Request($method, $uri);
+
+        try {
+            return $this->httpClient->send($request, $options);
+        } catch (RequestException $e) {
+            throw ApiException::wrapRequestException($e);
+        } catch (Throwable | GuzzleException $e) {
+            throw new ApiException($request, $e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     public function runTransaction(callable $callable)
     {
-        $transaction = new Transaction($this->client);
+        $transaction = new Transaction($this->httpClient);
 
         return $callable($transaction);
     }

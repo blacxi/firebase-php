@@ -243,7 +243,7 @@ class Factory
             $handler->push($middleware, $name);
         }
 
-        return $this->instantiate(Database::class, $this->getDatabaseUri(), new Database\ApiClient($http));
+        return $this->instantiate(Database::class, $this->getDatabaseUri(), $http);
     }
 
     protected function createRemoteConfig(): RemoteConfig

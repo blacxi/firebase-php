@@ -2,11 +2,18 @@
 
 namespace Kreait\Firebase\Database;
 
+use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Psr7\Request;
 use Kreait\Firebase\Database\Reference\Validator;
 use Kreait\Firebase\Exception\ApiException;
 use Kreait\Firebase\Exception\InvalidArgumentException;
 use Kreait\Firebase\Exception\OutOfRangeException;
+use Kreait\Firebase\Util\JSON;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
+use Throwable;
 
 /**
  * A Reference represents a specific location in your database and can be used
@@ -22,9 +29,9 @@ class Reference
     private $uri;
 
     /**
-     * @var ApiClient
+     * @var ClientInterface
      */
-    private $apiClient;
+    private $httpClient;
 
     /**
      * @var Validator
@@ -35,19 +42,15 @@ class Reference
      * Creates a new Reference instance for the given URI which is accessed by
      * the given API client and validated by the Validator (obviously).
      *
-     * @param UriInterface $uri
-     * @param ApiClient $apiClient
-     * @param Validator|null $validator
-     *
      * @throws InvalidArgumentException if the reference URI is invalid
      */
-    public function __construct(UriInterface $uri, ApiClient $apiClient, Validator $validator = null)
+    public function __construct(UriInterface $uri, ClientInterface $httpClient, Validator $validator = null)
     {
         $this->validator = $validator ?? new Validator();
         $this->validator->validateUri($uri);
 
         $this->uri = $uri;
-        $this->apiClient = $apiClient;
+        $this->httpClient = $httpClient;
     }
 
     /**
@@ -61,7 +64,7 @@ class Reference
      *
      * @return string|null
      */
-    public function getKey()
+    public function getKey(): ?string
     {
         $key = basename($this->getPath());
 
@@ -89,13 +92,13 @@ class Reference
      */
     public function getParent(): self
     {
-        $parentPath = \dirname($this->getPath());
+        $parentPath = dirname($this->getPath());
 
         if ($parentPath === '.') {
             throw new OutOfRangeException('Cannot get parent of root reference');
         }
 
-        return new self($this->uri->withPath($parentPath), $this->apiClient, $this->validator);
+        return new self($this->uri->withPath($parentPath), $this->httpClient, $this->validator);
     }
 
     /**
@@ -107,7 +110,7 @@ class Reference
      */
     public function getRoot(): self
     {
-        return new self($this->uri->withPath('/'), $this->apiClient, $this->validator);
+        return new self($this->uri->withPath('/'), $this->httpClient, $this->validator);
     }
 
     /**
@@ -129,7 +132,7 @@ class Reference
         $childPath = sprintf('%s/%s', trim($this->uri->getPath(), '/'), trim($path, '/'));
 
         try {
-            return new self($this->uri->withPath($childPath), $this->apiClient, $this->validator);
+            return new self($this->uri->withPath($childPath), $this->httpClient, $this->validator);
         } catch (\InvalidArgumentException $e) {
             throw new InvalidArgumentException($e->getMessage(), $e->getCode(), $e);
         }
@@ -267,7 +270,7 @@ class Reference
     {
         $snapshot = $this->shallow()->getSnapshot();
 
-        if (\is_array($value = $snapshot->getValue())) {
+        if (is_array($value = $snapshot->getValue())) {
             return array_keys($value);
         }
 
@@ -303,9 +306,9 @@ class Reference
     public function set($value): self
     {
         if ($value === null) {
-            $this->apiClient->remove($this->uri);
+            $this->request('DELETE', $this->uri);
         } else {
-            $this->apiClient->set($this->uri, $value);
+            $this->request('PUT', $this->uri, ['json' => $value]);
         }
 
         return $this;
@@ -320,7 +323,9 @@ class Reference
      */
     public function getSnapshot(): Snapshot
     {
-        $value = $this->apiClient->get($this->uri);
+        $response = $this->request('GET', $this->uri);
+
+        $value = JSON::decode((string) $response->getBody(), true);
 
         return new Snapshot($this, $value);
     }
@@ -350,10 +355,13 @@ class Reference
     {
         $value = $value ?? [];
 
-        $newKey = $this->apiClient->push($this->uri, $value);
+        $response = $this->request('POST', $this->uri, ['json' => $value]);
+
+        $newKey = JSON::decode((string) $response->getBody(), true)['name'];
+
         $newPath = sprintf('%s/%s', $this->uri->getPath(), $newKey);
 
-        return new self($this->uri->withPath($newPath), $this->apiClient, $this->validator);
+        return new self($this->uri->withPath($newPath), $this->httpClient, $this->validator);
     }
 
     /**
@@ -369,7 +377,7 @@ class Reference
      */
     public function remove(): self
     {
-        $this->apiClient->remove($this->uri);
+        $this->request('DELETE', $this->uri);
 
         return $this;
     }
@@ -396,7 +404,7 @@ class Reference
      */
     public function update(array $values): self
     {
-        $this->apiClient->update($this->uri, $values);
+        $this->request('PATCH', $this->uri, ['json' => $values]);
 
         return $this;
     }
@@ -440,6 +448,21 @@ class Reference
      */
     private function query(): Query
     {
-        return new Query($this, $this->apiClient);
+        return new Query($this, $this->httpClient);
+    }
+
+    private function request(string $method, $uri, array $options = null): ResponseInterface
+    {
+        $options = $options ?? [];
+
+        $request = new Request($method, $uri);
+
+        try {
+            return $this->httpClient->send($request, $options);
+        } catch (RequestException $e) {
+            throw ApiException::wrapRequestException($e);
+        } catch (Throwable | GuzzleException $e) {
+            throw new ApiException($request, $e->getMessage(), $e->getCode(), $e);
+        }
     }
 }

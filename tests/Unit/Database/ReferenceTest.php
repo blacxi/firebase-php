@@ -2,15 +2,18 @@
 
 namespace Kreait\Firebase\Tests\Unit\Database;
 
+use Exception;
+use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Uri;
-use Kreait\Firebase\Database\ApiClient;
 use Kreait\Firebase\Database\Query;
 use Kreait\Firebase\Database\Reference;
-use Kreait\Firebase\Database\Snapshot;
+use Kreait\Firebase\Exception\ApiException;
 use Kreait\Firebase\Exception\InvalidArgumentException;
 use Kreait\Firebase\Exception\OutOfRangeException;
 use Kreait\Firebase\Tests\UnitTestCase;
-use Psr\Http\Message\UriInterface;
 
 class ReferenceTest extends UnitTestCase
 {
@@ -18,15 +21,7 @@ class ReferenceTest extends UnitTestCase
      * @var Uri
      */
     private $uri;
-
-    /**
-     * @var ApiClient|\PHPUnit_Framework_MockObject_MockObject
-     */
-    private $apiClient;
-
-    /**
-     * @var Reference
-     */
+    private $httpClient;
     private $reference;
 
     protected function setUp(): void
@@ -34,9 +29,9 @@ class ReferenceTest extends UnitTestCase
         parent::setUp();
 
         $this->uri = new Uri('http://domain.tld/parent/key');
-        $this->apiClient = $this->createMock(ApiClient::class);
+        $this->httpClient = $this->createMock(ClientInterface::class);
 
-        $this->reference = new Reference($this->uri, $this->apiClient);
+        $this->reference = new Reference($this->uri, $this->httpClient);
     }
 
     public function testGetKey()
@@ -83,22 +78,18 @@ class ReferenceTest extends UnitTestCase
 
     public function testGetChildKeys()
     {
-        $this->apiClient
-            ->expects($this->any())
-            ->method('get')
-            ->with($this->anything())
-            ->willReturn(['a' => true, 'b' => true, 'c' => true]);
+        $this->httpClient
+            ->method('send')
+            ->willReturn(new Response(200, [], '{"a": true, "b": true, "c": true}'));
 
         $this->assertSame(['a', 'b', 'c'], $this->reference->getChildKeys());
     }
 
     public function testGetChildKeysWhenNoChildrenAreSet()
     {
-        $this->apiClient
-            ->expects($this->any())
-            ->method('get')
-            ->with($this->anything())
-            ->willReturn('scalar value');
+        $this->httpClient
+            ->method('send')
+            ->willReturn(new Response(200, [], '"scalar value"'));
 
         $this->expectException(OutOfRangeException::class);
 
@@ -120,44 +111,60 @@ class ReferenceTest extends UnitTestCase
 
     public function testGetSnapshot()
     {
-        $this->apiClient->expects($this->any())->method('get')->with($this->anything())->willReturn('value');
+        $this->httpClient
+            ->method('send')
+            ->willReturn(new Response(200, [], '"value"'));
 
-        $this->assertInstanceOf(Snapshot::class, $this->reference->getSnapshot());
+        $this->assertSame('value', $this->reference->getSnapshot()->getValue());
     }
 
     public function testGetValue()
     {
-        $this->apiClient->expects($this->any())->method('get')->with($this->anything())->willReturn('value');
+        $this->httpClient
+            ->method('send')
+            ->willReturn(new Response(200, [], json_encode('value')));
 
         $this->assertSame('value', $this->reference->getValue());
     }
 
     public function testSet()
     {
-        $this->apiClient->expects($this->once())->method('set');
+        $this->httpClient
+            ->expects($this->once())
+            ->method('send')
+            ->willReturn(new Response());
 
-        $this->assertSame($this->reference, $this->reference->set('value'));
+        $this->reference->set('value');
     }
 
     public function testRemove()
     {
-        $this->apiClient->expects($this->once())->method('remove');
+        $this->httpClient
+            ->expects($this->once())
+            ->method('send')
+            ->willReturn(new Response());
 
-        $this->assertSame($this->reference, $this->reference->remove());
+        $this->reference->remove();
     }
 
     public function testUpdate()
     {
-        $this->apiClient->expects($this->once())->method('update');
+        $this->httpClient
+            ->expects($this->once())
+            ->method('send')
+            ->willReturn(new Response());
 
-        $this->assertSame($this->reference, $this->reference->update(['any' => 'thing']));
+        $this->reference->update(['any' => 'thing']);
     }
 
     public function testPush()
     {
-        $this->apiClient->expects($this->once())->method('push')->willReturn('newChild');
+        $this->httpClient
+            ->method('send')
+            ->willReturn(new Response(200, [], '{"name": "newChild"}'));
 
         $childReference = $this->reference->push('value');
+
         $this->assertSame('newChild', $childReference->getKey());
     }
 
@@ -165,7 +172,30 @@ class ReferenceTest extends UnitTestCase
     {
         $uri = $this->reference->getUri();
 
-        $this->assertInstanceOf(UriInterface::class, $uri);
         $this->assertSame((string) $uri, (string) $this->reference);
+    }
+
+    public function testCatchRequestException()
+    {
+        $request = new Request('GET', 'foo');
+
+        $this->httpClient
+            ->method($this->anything())
+            ->willThrowException(new RequestException('foo', $request));
+
+        $this->expectException(ApiException::class);
+
+        $this->reference->getSnapshot();
+    }
+
+    public function testCatchAnyException()
+    {
+        $this->httpClient
+            ->method($this->anything())
+            ->willThrowException(new Exception());
+
+        $this->expectException(ApiException::class);
+
+        $this->reference->getSnapshot();
     }
 }

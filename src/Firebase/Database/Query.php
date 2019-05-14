@@ -2,11 +2,18 @@
 
 namespace Kreait\Firebase\Database;
 
+use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Psr7\Request;
 use Kreait\Firebase\Database\Query\Filter;
 use Kreait\Firebase\Database\Query\Sorter;
 use Kreait\Firebase\Exception\ApiException;
 use Kreait\Firebase\Exception\QueryException;
+use Kreait\Firebase\Util\JSON;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
+use Throwable;
 
 /**
  * A Query sorts and filters the data at a database location so only a subset of the child data is included.
@@ -29,9 +36,9 @@ class Query
     private $reference;
 
     /**
-     * @var ApiClient
+     * @var ClientInterface
      */
-    private $apiClient;
+    private $httpClient;
 
     /**
      * @var Filter[]
@@ -43,17 +50,10 @@ class Query
      */
     private $sorter;
 
-    /**
-     * Creates a new Query for the given Reference which is
-     * executed by the given API client.
-     *
-     * @param Reference $reference
-     * @param ApiClient $apiClient
-     */
-    public function __construct(Reference $reference, ApiClient $apiClient)
+    public function __construct(Reference $reference, ClientInterface $httpClient)
     {
         $this->reference = $reference;
-        $this->apiClient = $apiClient;
+        $this->httpClient = $httpClient;
         $this->filters = [];
     }
 
@@ -79,10 +79,12 @@ class Query
     public function getSnapshot(): Snapshot
     {
         try {
-            $value = $this->apiClient->get($this->getUri());
+            $response = $this->request('GET', $this->getUri());
         } catch (ApiException $e) {
             throw QueryException::fromApiException($e, $this);
         }
+
+        $value = JSON::decode((string) $response->getBody(), true);
 
         if ($this->sorter) {
             $value = $this->sorter->modifyValue($value);
@@ -314,5 +316,20 @@ class Query
         $query->sorter = $sorter;
 
         return $query;
+    }
+
+    private function request(string $method, $uri, array $options = null): ResponseInterface
+    {
+        $options = $options ?? [];
+
+        $request = new Request($method, $uri);
+
+        try {
+            return $this->httpClient->send($request, $options);
+        } catch (RequestException $e) {
+            throw ApiException::wrapRequestException($e);
+        } catch (Throwable | GuzzleException $e) {
+            throw new ApiException($request, $e->getMessage(), $e->getCode(), $e);
+        }
     }
 }
