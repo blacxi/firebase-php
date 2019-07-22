@@ -44,12 +44,12 @@ class ApiClient extends BaseClient
         ]);
     }
 
-    public function sendBatchRequest(CloudMessageCollection $messages): ResponseInterface
+    public function sendBatchRequest(Messages $messages): ResponseInterface
     {
         return $this->sendBatchRequestAsync($messages)->wait();
     }
 
-    public function sendBatchRequestAsync(CloudMessageCollection $messages): PromiseInterface
+    public function sendBatchRequestAsync(Messages $messages): PromiseInterface
     {
         $collection = new SubRequestCollection();
         foreach ($messages as $message) {

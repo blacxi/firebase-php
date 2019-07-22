@@ -13,7 +13,7 @@ use Kreait\Firebase\Messaging\ApiClient;
 use Kreait\Firebase\Messaging\AppInstance;
 use Kreait\Firebase\Messaging\AppInstanceApiClient;
 use Kreait\Firebase\Messaging\CloudMessage;
-use Kreait\Firebase\Messaging\CloudMessageCollection;
+use Kreait\Firebase\Messaging\Messages;
 use Kreait\Firebase\Messaging\Message;
 use Kreait\Firebase\Messaging\MessageTarget;
 use Kreait\Firebase\Messaging\MulticastSendReport;
@@ -72,13 +72,13 @@ class Messaging
             );
         }
 
-        $collection = new CloudMessageCollection();
+        $collection = new Messages();
         foreach ($messages as $message) {
             $message = $this->checkMessage($message);
             if (($message instanceof CloudMessage) && !$message->hasTarget()) {
                 throw new InvalidArgumentException('The given message has no target');
             }
-            $collection->addMessage($message);
+            $collection->add($message);
         }
 
         $reports = [];
