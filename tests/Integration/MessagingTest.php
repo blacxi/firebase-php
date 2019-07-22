@@ -37,6 +37,22 @@ class MessagingTest extends IntegrationTestCase
         $this->assertArrayHasKey('name', $result);
     }
 
+    public function testSendAllMessages()
+    {
+        $messages = [];
+        for ($i = 0; $i < 10; ++$i) {
+            $message = MessageTestCase::createFullMessageData();
+            $message['condition'] = "'dogs' in topics || 'cats' in topics";
+            $messages[] = $message;
+        }
+
+        $result = $this->messaging->sendAll($messages)->toArray();
+
+        $this->assertArrayHasKey('responses', $result);
+        $this->assertArrayHasKey('successCount', $result);
+        $this->assertArrayHasKey('failureCount', $result);
+    }
+
     public function testSendRawMessage()
     {
         $data = MessageTestCase::createFullMessageData();

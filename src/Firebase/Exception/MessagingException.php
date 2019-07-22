@@ -44,31 +44,40 @@ class MessagingException extends \RuntimeException implements FirebaseException
             $message = $errors['error'];
         }
 
-        switch ($code) {
-            case 400:
-                $error = new InvalidMessage($message ?: 'Invalid message', $code, $e);
-                break;
-            case 401:
-            case 403:
-                $error = new AuthenticationError($message ?: 'Authentication error', $code, $e);
-                break;
-            case 404:
-                $error = new NotFound($message ?: 'Not found', $code, $e);
-                break;
-            case 500:
-                $error = new ServerError($message ?: 'Server error', $code, $e);
-                break;
-            case 503:
-                $error = new ServerUnavailable($message ?: 'Server unavailable', $code, $e);
-                break;
-            default:
-                $error = new UnknownError($message ?: 'Unknown error', $code, $e);
-                break;
-        }
-
-        return $error
+        return self::createExceptionMessage($code, $message, $e)
             ->withResponse($response)
             ->withErrors($errors);
+    }
+
+    public static function fromResponse(ResponseInterface $response): self
+    {
+        $errors = self::getErrorsFromResponse($response);
+
+        $code = (int) ($errors['error']['code'] ?? $response->getStatusCode());
+        $message = $errors['error']['message'] ?? $response->getReasonPhrase();
+
+        return self::createExceptionMessage($code, $message)
+            ->withResponse($response)
+            ->withErrors($errors);
+    }
+
+    private static function createExceptionMessage($code, $message, $e = null)
+    {
+        switch ($code) {
+            case 400:
+                return new InvalidMessage($message ?: 'Invalid message', $code, $e);
+            case 401:
+            case 403:
+                return new AuthenticationError($message ?: 'Authentication error', $code, $e);
+            case 404:
+                return new NotFound($message ?: 'Not found', $code, $e);
+            case 500:
+                return new ServerError($message ?: 'Server error', $code, $e);
+            case 503:
+                return new ServerUnavailable($message ?: 'Server unavailable', $code, $e);
+            default:
+                return new UnknownError($message ?: 'Unknown error', $code, $e);
+        }
     }
 
     public function errors(): array
